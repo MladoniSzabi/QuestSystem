@@ -18,6 +18,11 @@ public:
     ~QuestSystem();
 
     bool open(std::string questDatabaseFile);
+
+    bool startQuest(long questId);
+    bool startQuest(std::string questName);
+
+    std::vector<Quest> getActiveQuests();
 };
 
 #endif // QUESTSYSTEM_HPP_
