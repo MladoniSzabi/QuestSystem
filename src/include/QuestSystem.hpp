@@ -18,6 +18,8 @@ public:
     ~QuestSystem();
 
     bool open(std::string questDatabaseFile);
+    // Used for testing
+    void setDatabase(sqlite3 *connection) { _questDatabaseConn = connection; }
 
     bool startQuest(long questId);
     bool startQuest(std::string questName);
