@@ -5,3 +5,8 @@ Makefile
 out
 build
 .vscode
+src/libout.a
+lib/
+test/CTestTestfile.cmake
+test/testing*
+_deps
