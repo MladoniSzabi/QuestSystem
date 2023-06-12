@@ -2,8 +2,15 @@
 
 typedef std::vector<std::vector<std::string>> SqlReturn;
 
-static int callback(void *, int, char **, char **)
+int callback(void *retvalPtr, int columnCount, char **values, char **columnName)
 {
+    SqlReturn *retval = (SqlReturn *)retvalPtr;
+    std::vector<std::string> row;
+    for (int i = 0; i < columnCount; i++)
+    {
+        row.push_back(std::string(values[i]));
+    }
+    retval->push_back(row);
     return 0;
 }
 
@@ -25,24 +32,23 @@ bool QuestSystem::open(std::string questDatabaseFile)
     return true;
 }
 
-bool QuestSystem::startQuest(long questId)
+char *QuestSystem::startQuest(long questId)
 {
     std::string sql = "INSERT INTO Progress(QuestID, RequirementID, Finished) VALUES (" + std::to_string(questId) + ", 0, 0)";
-    char *errorStr;
-    int errorCode = sqlite3_exec(_questDatabaseConn, sql.c_str(), callback, nullptr, &errorStr);
-    return errorCode;
+    char *errorStr = nullptr;
+    int errorCode = sqlite3_exec(_questDatabaseConn, sql.c_str(), nullptr, nullptr, &errorStr);
+    return errorStr;
 }
 
-bool QuestSystem::startQuest(std::string questName)
+char *QuestSystem::startQuest(std::string questName)
 {
-    std::string getQuestIdSql = "SELECT ID FROM QUEST WHERE Name=" + questName;
-    char *errorStr;
+    std::string getQuestIdSql = "SELECT Id FROM Quest WHERE Name='" + questName + "';";
+    char *errorStr = nullptr;
     SqlReturn sqlReturn;
     int errorCode = sqlite3_exec(_questDatabaseConn, getQuestIdSql.c_str(), callback, (void *)&sqlReturn, &errorStr);
-
     if (sqlReturn.size() == 0)
     {
-        return false;
+        return "Quest not found";
     }
 
     long questId = std::stol(sqlReturn[0][0]);
@@ -51,7 +57,7 @@ bool QuestSystem::startQuest(std::string questName)
 
 std::vector<Quest> QuestSystem::getActiveQuests()
 {
-    std::string sql = "SELECT * FROM Quest LEFT JOIN PROGRESS ON Quest.ID=Progress.QuestID WHERE Progress.QuestID IS NULL";
+    std::string sql = "SELECT * FROM Quest LEFT JOIN PROGRESS ON Quest.ID=Progress.QuestID WHERE Progress.QuestID IS NOT NULL";
     char *errorStr;
     SqlReturn questArray;
     int errorCode = sqlite3_exec(_questDatabaseConn, sql.c_str(), callback, (void *)&questArray, &errorStr);

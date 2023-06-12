@@ -25,8 +25,9 @@ protected:
                 CREATE TABLE Quest(Id INTEGER PRIMARY KEY AUTOINCREMENT, Name TEXT UNIQUE NOT NULL, Description TEXT);\
                 CREATE TABLE Stage(Id INTEGER PRIMARY KEY AUTOINCREMENT, QuestId INTEGER NOT NULL, Description TEXT,\
                     DependsOn INTEGER, FOREIGN KEY (QuestId) REFERENCES Quest(Id), FOREIGN KEY (DependsOn) REFERENCES Stage(Id));\
+                CREATE TABLE Progress(Id INTEGER PRIMARY KEY AUTOINCREMENT, QuestId INTEGER NOT NULL, RequirementId INTEGER, Finished INTEGER);\
                 INSERT INTO Quest(Name, Description) VALUES ('Hello, World!', 'This is the first quest you will go on!'), ('Goodbye, Wold!', 'Test');\
-                INSERT INTO Stage(QuestId, Description, DependsOn) VALUES (1, 'Step 1', NULL), (1, 'Step 2', 1), (2, 'Test1', NULL)\
+                INSERT INTO Stage(QuestId, Description, DependsOn) VALUES (1, 'Step 1', NULL), (1, 'Step 2', 1), (2, 'Test1', NULL);\
             ",
             nullptr,
             nullptr,
@@ -45,4 +46,15 @@ protected:
 TEST_F(QuestSystemFixture, TestNoActive)
 {
     EXPECT_EQ(qs.getActiveQuests().size(), 0);
+}
+
+TEST_F(QuestSystemFixture, TestStartQuest)
+{
+    EXPECT_EQ(qs.getActiveQuests().size(), 0);
+    char *error = qs.startQuest(1);
+    EXPECT_EQ(error, nullptr) << error;
+    EXPECT_EQ(qs.getActiveQuests().size(), 1);
+    error = qs.startQuest("Goodbye, Wold!");
+    EXPECT_EQ(error, nullptr) << error;
+    EXPECT_EQ(qs.getActiveQuests().size(), 2);
 }
