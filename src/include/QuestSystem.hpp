@@ -7,6 +7,7 @@
 #include <sqlite/sqlite3.h>
 
 #include "Quest.hpp"
+#include "Stage.hpp"
 
 class QuestSystem
 {
@@ -26,6 +27,7 @@ public:
     char *startQuest(std::string questName);
 
     std::vector<Quest> getActiveQuests();
+    std::vector<Stage> getActiveStages();
 };
 
 #endif // QUESTSYSTEM_HPP_
