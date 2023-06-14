@@ -25,7 +25,8 @@ protected:
                 CREATE TABLE Quest(Id INTEGER PRIMARY KEY AUTOINCREMENT, Name TEXT UNIQUE NOT NULL, Description TEXT);\
                 CREATE TABLE Stage(Id INTEGER PRIMARY KEY AUTOINCREMENT, QuestId INTEGER NOT NULL, Description TEXT,\
                     DependsOn INTEGER, FOREIGN KEY (QuestId) REFERENCES Quest(Id), FOREIGN KEY (DependsOn) REFERENCES Stage(Id));\
-                CREATE TABLE Progress(Id INTEGER PRIMARY KEY AUTOINCREMENT, QuestId INTEGER NOT NULL, RequirementId INTEGER, Finished INTEGER);\
+                CREATE TABLE Progress(Id INTEGER PRIMARY KEY AUTOINCREMENT, StageId INTEGER NOT NULL, Finished INTEGER,\
+                    FOREIGN KEY (StageId) REFERENCES Stage(Id));\
                 INSERT INTO Quest(Name, Description) VALUES ('Hello, World!', 'This is the first quest you will go on!'), ('Goodbye, Wold!', 'Test');\
                 INSERT INTO Stage(QuestId, Description, DependsOn) VALUES (1, 'Step 1', NULL), (1, 'Step 2', 1), (2, 'Test1', NULL);\
             ",
@@ -39,7 +40,7 @@ protected:
 
     void TearDown() override
     {
-        sqlite3_close(db);
+        qs.close();
     }
 };
 

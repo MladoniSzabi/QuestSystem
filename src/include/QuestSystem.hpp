@@ -11,13 +11,14 @@
 class QuestSystem
 {
 private:
-    sqlite3 *_questDatabaseConn;
+    sqlite3 *_questDatabaseConn = nullptr;
 
 public:
     QuestSystem();
     ~QuestSystem();
 
     bool open(std::string questDatabaseFile);
+    void close();
     // Used for testing
     void setDatabase(sqlite3 *connection) { _questDatabaseConn = connection; }
 
