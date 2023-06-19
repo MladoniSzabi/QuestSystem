@@ -4,6 +4,13 @@ project(QuestSystem VERSION 0.1)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-include_directories(src)
-add_subdirectory(src)
-add_subdirectory(test)
+add_library(out STATIC
+
+    vendor/src/sqlite/sqlite3.c
+
+    src/src/QuestSystem.cpp
+)
+
+target_include_directories(out PUBLIC src/include)
+target_include_directories(out PUBLIC vendor/include)
+set(HEADER_FILES src/include/QuestSystem.hpp)
