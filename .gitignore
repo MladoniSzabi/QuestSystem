@@ -10,3 +10,5 @@ lib/
 test/CTestTestfile.cmake
 test/testing*
 _deps
+editor/imgui.ini
+editor/editor
