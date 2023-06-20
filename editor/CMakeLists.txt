@@ -20,7 +20,7 @@ include_directories(${OPENGL_gl_LIBRARY})
 add_executable(editor
 
     src/main.cpp
-    src/imgui_init.cpp
+    src/ImGuiManager.cpp
 
     ../vendor/src/imgui/imgui.cpp
     ../vendor/src/imgui/imgui_demo.cpp
