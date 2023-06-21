@@ -67,3 +67,8 @@ TEST_F(QuestSystemFixture, TestStartQuest)
     EXPECT_EQ(qs.getActiveQuests().size(), 2);
     EXPECT_EQ(qs.getActiveStages().size(), 2);
 }
+
+TEST_F(QuestSystemFixture, TestGetQuests)
+{
+    EXPECT_EQ(qs.getAllQuests().size(), 2);
+}

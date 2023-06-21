@@ -12,6 +12,7 @@ add_library(out STATIC
 )
 
 add_subdirectory(editor)
+add_subdirectory(test)
 
 include_directories(
     src/include

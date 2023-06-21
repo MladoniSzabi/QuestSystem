@@ -26,6 +26,8 @@ public:
     char *startQuest(long questId);
     char *startQuest(std::string questName);
 
+    std::vector<Quest> getAllQuests();
+
     std::vector<Quest> getActiveQuests();
     std::vector<Stage> getActiveStages();
 };

@@ -75,6 +75,26 @@ char *QuestSystem::startQuest(std::string questName)
     return errorStr;
 }
 
+std::vector<Quest> QuestSystem::getAllQuests()
+{
+    std::string sql = "SELECT * FROM Quest";
+    char *errorStr;
+    SqlReturn questArray;
+    int errorCode = sqlite3_exec(_questDatabaseConn, sql.c_str(), callback, (void *)&questArray, &errorStr);
+    if (errorCode)
+    {
+        return {};
+    }
+
+    std::vector<Quest> quests;
+    for (std::vector<std::string> &quest : questArray)
+    {
+        quests.push_back(Quest(quest));
+    }
+
+    return quests;
+}
+
 std::vector<Quest> QuestSystem::getActiveQuests()
 {
     std::string sql = "SELECT Quest.* FROM Quest INNER JOIN Stage ON Quest.Id=Stage.QuestId LEFT JOIN PROGRESS ON Stage.Id=Progress.StageId WHERE Stage.Level=0 AND Progress.StageId IS NOT NULL;";
