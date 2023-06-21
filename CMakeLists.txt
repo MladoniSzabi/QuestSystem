@@ -11,6 +11,13 @@ add_library(out STATIC
     src/src/QuestSystem.cpp
 )
 
+add_subdirectory(editor)
+
+include_directories(
+    src/include
+    vendor/include
+)
+
 target_include_directories(out PUBLIC src/include)
 target_include_directories(out PUBLIC vendor/include)
 set(HEADER_FILES src/include/QuestSystem.hpp)

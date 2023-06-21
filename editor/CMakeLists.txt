@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.13)
 project(editor)
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 
 find_package(OpenGL REQUIRED)
 
@@ -12,15 +12,19 @@ else (OPENGL_FOUND)
     message("opengl not found")
 endif()
 
-include_directories(../src/include)
-include_directories(../vendor/include/imgui/)
-include_directories(include)
-include_directories(${OPENGL_gl_LIBRARY})
+include_directories(
+    include
+    ../src/include
+    ../vendor/include/
+    ../vendor/include/imgui
+    ${OPENGL_gl_LIBRARY}
+)
 
 add_executable(editor
 
     src/main.cpp
     src/ImGuiManager.cpp
+    src/QuestLayer.cpp
 
     ../vendor/src/imgui/imgui.cpp
     ../vendor/src/imgui/imgui_demo.cpp
