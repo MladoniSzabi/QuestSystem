@@ -40,4 +40,4 @@ add_executable(editor
 target_link_libraries(editor GL)
 target_link_libraries(editor glfw)
 
-target_link_libraries(editor ${CMAKE_SOURCE_DIR}/../libout.a)
+target_link_libraries(editor ${CMAKE_CURRENT_LIST_DIR}/../libout.a)

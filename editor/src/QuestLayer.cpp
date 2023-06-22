@@ -51,7 +51,7 @@ void QuestLayer::renderQuest(Quest &quest)
     ImGui::AlignTextToFramePadding();
     bool node_open = ImGui::TreeNode("Quest", "%s", quest.name.c_str());
     ImGui::TableSetColumnIndex(1);
-    ImGui::Text("");
+    ImGui::Text("%s", "");
 
     if (node_open)
     {
@@ -64,6 +64,14 @@ void QuestLayer::renderQuest(Quest &quest)
     }
 
     ImGui::PopID();
+}
+
+static int createQuestCallback(void *ptr, int rowCount, char **values, char **rowNames)
+{
+    long *newRow = (long *)newRow;
+    *newRow = atol(values[0]);
+    std::cout << "Creating new Quest: " << *newRow << std::endl;
+    return 0;
 }
 
 void QuestLayer::draw()
@@ -96,6 +104,20 @@ void QuestLayer::draw()
 
     if (_db != nullptr)
     {
+        if (ImGui::Button("Add Quest"))
+        {
+            char *errmsg = nullptr;
+            long newRow = 0;
+            if (sqlite3_exec(
+                    _db, "INSERT INTO Quest(Name, Description) Values('', '') returning Id", createQuestCallback, (void *)&newRow, &errmsg))
+            {
+                std::cout << "Error creating quest:" << errmsg << std::endl;
+            }
+            else
+            {
+                _quests.emplace_back(newRow, std::string(), std::string());
+            }
+        }
         if (ImGui::BeginTable("List of quests", 2, ImGuiTableFlags_BordersOuter | ImGuiTableFlags_Resizable))
         {
             for (auto &quest : _quests)
