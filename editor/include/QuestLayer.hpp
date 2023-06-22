@@ -9,16 +9,19 @@
 
 #include "ImGuiLayer.hpp"
 #include "QuestSystem.hpp"
+#include "Quest.hpp"
 
 class QuestLayer : public ImGuiLayer
 {
 private:
     bool _showCreateQuestWindow = false;
-    std::vector<std::string> _quests;
     sqlite3 *_db = nullptr;
     ImGui::FileBrowser _fileDialog;
+    std::vector<Quest> _quests;
+    QuestSystem _qs;
 
-    void queryDb();
+    void renderQuest(Quest &);
+    void renderQuestLeafNode(const std::string &label, std::string &value, long id);
 
 public:
     QuestLayer();

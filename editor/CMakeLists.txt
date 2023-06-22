@@ -31,6 +31,7 @@ add_executable(editor
     ../vendor/src/imgui/imgui_draw.cpp
     ../vendor/src/imgui/imgui_tables.cpp
     ../vendor/src/imgui/imgui_widgets.cpp
+    ../vendor/src/imgui/imgui_stdlib.cpp
 
     ../vendor/src/imgui/imgui_impl_opengl3.cpp
     ../vendor/src/imgui/imgui_impl_glfw.cpp
