@@ -14,13 +14,12 @@
 class QuestLayer : public ImGuiLayer
 {
 private:
-    bool _showCreateQuestWindow = false;
     sqlite3 *_db = nullptr;
     ImGui::FileBrowser _fileDialog;
     std::vector<Quest> _quests;
     QuestSystem _qs;
 
-    void renderQuest(Quest &);
+    bool renderQuest(Quest &);
     void renderQuestLeafNode(const std::string &label, std::string &value, long id);
 
 public:

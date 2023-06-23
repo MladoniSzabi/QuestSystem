@@ -23,7 +23,7 @@ void QuestLayer::renderQuestLeafNode(const std::string &label, std::string &valu
     ImGui::TableSetColumnIndex(1);
 
     // TODO: this is slow and should not happen every frame, find a way to batch sql queries
-    if (ImGui::InputText(label.c_str(), &value))
+    if (ImGui::InputText("", &value))
     {
         char *errmsg = nullptr;
         std::string escapedValue = value;
@@ -42,9 +42,9 @@ void QuestLayer::renderQuestLeafNode(const std::string &label, std::string &valu
     }
 }
 
-void QuestLayer::renderQuest(Quest &quest)
+bool QuestLayer::renderQuest(Quest &quest)
 {
-
+    bool isDeleted = false;
     ImGui::PushID(quest.id);
     ImGui::TableNextRow();
     ImGui::TableSetColumnIndex(0);
@@ -57,6 +57,22 @@ void QuestLayer::renderQuest(Quest &quest)
     {
         // render name
         ImGui::TableNextRow();
+        ImGui::TableSetColumnIndex(1);
+        if (ImGui::Button("Delete"))
+        {
+            char *errmsg = nullptr;
+            std::string sql = "DELETE FROM Quest WHERE Id=" + std::to_string(quest.id);
+            int rc = sqlite3_exec(_db, sql.c_str(), nullptr, nullptr, &errmsg);
+            if (rc)
+            {
+                std::cout << "There was an error deleting this quest: " << errmsg << std::endl;
+            }
+            else
+            {
+                isDeleted = true;
+            }
+        }
+        ImGui::TableNextRow();
         renderQuestLeafNode("name", quest.name, quest.id);
         ImGui::TableNextRow();
         renderQuestLeafNode("description", quest.description, quest.id);
@@ -64,6 +80,7 @@ void QuestLayer::renderQuest(Quest &quest)
     }
 
     ImGui::PopID();
+    return isDeleted;
 }
 
 static int createQuestCallback(void *ptr, int rowCount, char **values, char **rowNames)
@@ -120,9 +137,13 @@ void QuestLayer::draw()
         }
         if (ImGui::BeginTable("List of quests", 2, ImGuiTableFlags_BordersOuter | ImGuiTableFlags_Resizable))
         {
-            for (auto &quest : _quests)
+            for (int i = 0; i < _quests.size(); i++)
             {
-                renderQuest(quest);
+                if (renderQuest(_quests[i]))
+                {
+                    _quests.erase(_quests.begin() + i);
+                    i--;
+                }
             }
             ImGui::EndTable();
         }
