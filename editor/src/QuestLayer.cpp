@@ -3,6 +3,12 @@
 #include <iostream>
 #include <imgui/imgui_stdlib.h>
 
+bool isNumber(const std::string &s)
+{
+    return !s.empty() && std::find_if(s.begin(), s.end(), [](unsigned char c)
+                                      { return !std::isdigit(c); }) == s.end();
+}
+
 QuestLayer::QuestLayer()
 {
     _fileDialog.SetTitle("Open Quest Database");
@@ -135,10 +141,26 @@ void QuestLayer::draw()
                 _quests.emplace_back(newRow, std::string(), std::string());
             }
         }
+
+        ImGui::SameLine();
+        ImGui::InputText("##", &_search);
         if (ImGui::BeginTable("List of quests", 2, ImGuiTableFlags_BordersOuter | ImGuiTableFlags_Resizable))
         {
             for (int i = 0; i < _quests.size(); i++)
             {
+                // Filter quests
+                if (_search != "")
+                {
+                    if (isNumber(_search) && std::to_string(_quests[i].id).find(_search) == std::string::npos)
+                    {
+                        continue;
+                    }
+                    else if (!isNumber(_search) && _quests[i].name.find(_search) == std::string::npos)
+                    {
+                        continue;
+                    }
+                }
+
                 if (renderQuest(_quests[i]))
                 {
                     _quests.erase(_quests.begin() + i);

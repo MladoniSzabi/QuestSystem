@@ -18,6 +18,7 @@ private:
     ImGui::FileBrowser _fileDialog;
     std::vector<Quest> _quests;
     QuestSystem _qs;
+    std::string _search = "";
 
     bool renderQuest(Quest &);
     void renderQuestLeafNode(const std::string &label, std::string &value, long id);
