@@ -24,12 +24,12 @@ void QuestLayer::renderQuestLeafNode(const std::string &label, std::string &valu
 {
     ImGui::TableSetColumnIndex(0);
     ImGui::AlignTextToFramePadding();
-    ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_Bullet;
+    const ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_Bullet;
     ImGui::TreeNodeEx("Field", flags, "%s", label.c_str());
     ImGui::TableSetColumnIndex(1);
 
     // TODO: this is slow and should not happen every frame, find a way to batch sql queries
-    if (ImGui::InputText("", &value))
+    if (ImGui::InputText(("##" + label).c_str(), &value))
     {
         char *errmsg = nullptr;
         std::string escapedValue = value;
@@ -57,14 +57,18 @@ bool QuestLayer::renderQuest(Quest &quest)
     ImGui::AlignTextToFramePadding();
     bool node_open = ImGui::TreeNode("Quest", "%s", quest.name.c_str());
     ImGui::TableSetColumnIndex(1);
-    ImGui::Text("%s", "");
-
-    if (node_open)
+    std::string popupName = "confirm delete popup " + std::to_string(quest.id);
+    if (ImGui::Button("Delete"))
     {
-        // render name
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(1);
-        if (ImGui::Button("Delete"))
+        ImGui::OpenPopup(popupName.c_str());
+    }
+
+    if (ImGui::BeginPopup(popupName.c_str()))
+    {
+        ImGui::Text("Are you sure you want to delete quest %ld: %s", quest.id, quest.name.c_str());
+        ImGui::Spacing();
+
+        if (ImGui::Button("Yes"))
         {
             char *errmsg = nullptr;
             std::string sql = "DELETE FROM Quest WHERE Id=" + std::to_string(quest.id);
@@ -77,7 +81,23 @@ bool QuestLayer::renderQuest(Quest &quest)
             {
                 isDeleted = true;
             }
+            ImGui::CloseCurrentPopup();
         }
+
+        ImGui::SameLine();
+        if (ImGui::Button("No"))
+        {
+            ImGui::CloseCurrentPopup();
+        }
+
+        ImGui::EndPopup();
+    }
+
+    if (node_open)
+    {
+        // render name
+        ImGui::TableNextRow();
+        ImGui::TableSetColumnIndex(1);
         ImGui::TableNextRow();
         renderQuestLeafNode("name", quest.name, quest.id);
         ImGui::TableNextRow();
@@ -143,7 +163,7 @@ void QuestLayer::draw()
         }
 
         ImGui::SameLine();
-        ImGui::InputText("##", &_search);
+        ImGui::InputText("##Search bar", &_search);
         if (ImGui::BeginTable("List of quests", 2, ImGuiTableFlags_BordersOuter | ImGuiTableFlags_Resizable))
         {
             for (int i = 0; i < _quests.size(); i++)
