@@ -21,7 +21,6 @@ private:
     std::string _search = "";
 
     bool renderQuest(Quest &);
-    void renderQuestLeafNode(const std::string &label, std::string &value, long id);
 
 public:
     QuestLayer();

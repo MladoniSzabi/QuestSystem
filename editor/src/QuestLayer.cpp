@@ -20,34 +20,6 @@ QuestLayer::~QuestLayer()
     sqlite3_close(_db);
 }
 
-void QuestLayer::renderQuestLeafNode(const std::string &label, std::string &value, long id)
-{
-    ImGui::TableSetColumnIndex(0);
-    ImGui::AlignTextToFramePadding();
-    const ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_Bullet;
-    ImGui::TreeNodeEx("Field", flags, "%s", label.c_str());
-    ImGui::TableSetColumnIndex(1);
-
-    // TODO: this is slow and should not happen every frame, find a way to batch sql queries
-    if (ImGui::InputText(("##" + label).c_str(), &value))
-    {
-        char *errmsg = nullptr;
-        std::string escapedValue = value;
-        size_t pos = escapedValue.find("\"", pos);
-        while (pos != std::string::npos)
-        {
-            escapedValue.replace(pos, 1, "\\\"");
-            pos = escapedValue.find("\"", pos + 1);
-        }
-        std::string sql = "UPDATE Quest SET " + label + " = \"" + escapedValue + "\" WHERE Id=" + std::to_string(id);
-        int rc = sqlite3_exec(_db, sql.c_str(), nullptr, nullptr, &errmsg);
-        if (rc)
-        {
-            std::cout << "Error updating " << label << ": " << errmsg << " | " << sql << std::endl;
-        }
-    }
-}
-
 bool QuestLayer::renderQuest(Quest &quest)
 {
     bool isDeleted = false;
@@ -95,13 +67,49 @@ bool QuestLayer::renderQuest(Quest &quest)
 
     if (node_open)
     {
+
+        const auto updateSql = [this](const std::string &field, const std::string &value, long id)
+        {
+            char *errmsg = nullptr;
+            std::string escapedValue = value;
+            size_t pos = escapedValue.find("\"", pos);
+            while (pos != std::string::npos)
+            {
+                escapedValue.replace(pos, 1, "\\\"");
+                pos = escapedValue.find("\"", pos + 1);
+            }
+            std::string sql = "UPDATE Quest SET " + field + " = \"" + escapedValue + "\" WHERE Id=" + std::to_string(id);
+            int rc = sqlite3_exec(_db, sql.c_str(), nullptr, nullptr, &errmsg);
+            if (rc)
+            {
+                std::cout << "Error updating " << field << ": " << errmsg << " | " << sql << std::endl;
+            }
+        };
+        const ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_Bullet;
+
         // render name
         ImGui::TableNextRow();
+        ImGui::TableSetColumnIndex(0);
+        ImGui::AlignTextToFramePadding();
+        ImGui::TreeNodeEx("Field", flags, "name");
         ImGui::TableSetColumnIndex(1);
+
+        // TODO: this is slow and should not happen every frame, find a way to batch sql queries
+        if (ImGui::InputText("##name", &quest.name))
+        {
+            updateSql("name", quest.name, quest.id);
+        }
         ImGui::TableNextRow();
-        renderQuestLeafNode("name", quest.name, quest.id);
-        ImGui::TableNextRow();
-        renderQuestLeafNode("description", quest.description, quest.id);
+        ImGui::TableSetColumnIndex(0);
+        ImGui::AlignTextToFramePadding();
+        ImGui::TreeNodeEx("Field", flags, "description");
+        ImGui::TableSetColumnIndex(1);
+
+        // TODO: this is slow and should not happen every frame, find a way to batch sql queries
+        if (ImGui::InputTextMultiline("##description", &quest.description))
+        {
+            updateSql("description", quest.description, quest.id);
+        }
         ImGui::TreePop();
     }
 
