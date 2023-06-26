@@ -20,101 +20,22 @@ QuestLayer::~QuestLayer()
     sqlite3_close(_db);
 }
 
-bool QuestLayer::renderQuest(Quest &quest)
+void QuestLayer::updateSql(const std::string &field, const std::string &value, long id)
 {
-    bool isDeleted = false;
-    ImGui::PushID(quest.id);
-    ImGui::TableNextRow();
-    ImGui::TableSetColumnIndex(0);
-    ImGui::AlignTextToFramePadding();
-    bool node_open = ImGui::TreeNode("Quest", "%s", quest.name.c_str());
-    ImGui::TableSetColumnIndex(1);
-    std::string popupName = "confirm delete popup " + std::to_string(quest.id);
-    if (ImGui::Button("Delete"))
+    char *errmsg = nullptr;
+    std::string escapedValue = value;
+    size_t pos = escapedValue.find("\"", pos);
+    while (pos != std::string::npos)
     {
-        ImGui::OpenPopup(popupName.c_str());
+        escapedValue.replace(pos, 1, "\\\"");
+        pos = escapedValue.find("\"", pos + 1);
     }
-
-    if (ImGui::BeginPopup(popupName.c_str()))
+    std::string sql = "UPDATE Quest SET " + field + " = \"" + escapedValue + "\" WHERE Id=" + std::to_string(id);
+    int rc = sqlite3_exec(_db, sql.c_str(), nullptr, nullptr, &errmsg);
+    if (rc)
     {
-        ImGui::Text("Are you sure you want to delete quest %ld: %s", quest.id, quest.name.c_str());
-        ImGui::Spacing();
-
-        if (ImGui::Button("Yes"))
-        {
-            char *errmsg = nullptr;
-            std::string sql = "DELETE FROM Quest WHERE Id=" + std::to_string(quest.id);
-            int rc = sqlite3_exec(_db, sql.c_str(), nullptr, nullptr, &errmsg);
-            if (rc)
-            {
-                std::cout << "There was an error deleting this quest: " << errmsg << std::endl;
-            }
-            else
-            {
-                isDeleted = true;
-            }
-            ImGui::CloseCurrentPopup();
-        }
-
-        ImGui::SameLine();
-        if (ImGui::Button("No"))
-        {
-            ImGui::CloseCurrentPopup();
-        }
-
-        ImGui::EndPopup();
+        std::cout << "Error updating " << field << ": " << errmsg << " | " << sql << std::endl;
     }
-
-    if (node_open)
-    {
-
-        const auto updateSql = [this](const std::string &field, const std::string &value, long id)
-        {
-            char *errmsg = nullptr;
-            std::string escapedValue = value;
-            size_t pos = escapedValue.find("\"", pos);
-            while (pos != std::string::npos)
-            {
-                escapedValue.replace(pos, 1, "\\\"");
-                pos = escapedValue.find("\"", pos + 1);
-            }
-            std::string sql = "UPDATE Quest SET " + field + " = \"" + escapedValue + "\" WHERE Id=" + std::to_string(id);
-            int rc = sqlite3_exec(_db, sql.c_str(), nullptr, nullptr, &errmsg);
-            if (rc)
-            {
-                std::cout << "Error updating " << field << ": " << errmsg << " | " << sql << std::endl;
-            }
-        };
-        const ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen | ImGuiTreeNodeFlags_Bullet;
-
-        // render name
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0);
-        ImGui::AlignTextToFramePadding();
-        ImGui::TreeNodeEx("Field", flags, "name");
-        ImGui::TableSetColumnIndex(1);
-
-        // TODO: this is slow and should not happen every frame, find a way to batch sql queries
-        if (ImGui::InputText("##name", &quest.name))
-        {
-            updateSql("name", quest.name, quest.id);
-        }
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0);
-        ImGui::AlignTextToFramePadding();
-        ImGui::TreeNodeEx("Field", flags, "description");
-        ImGui::TableSetColumnIndex(1);
-
-        // TODO: this is slow and should not happen every frame, find a way to batch sql queries
-        if (ImGui::InputTextMultiline("##description", &quest.description))
-        {
-            updateSql("description", quest.description, quest.id);
-        }
-        ImGui::TreePop();
-    }
-
-    ImGui::PopID();
-    return isDeleted;
 }
 
 static int createQuestCallback(void *ptr, int rowCount, char **values, char **rowNames)
@@ -124,6 +45,46 @@ static int createQuestCallback(void *ptr, int rowCount, char **values, char **ro
     std::cout << "Creating new Quest: " << *newRow << std::endl;
     return 0;
 }
+
+void addSoftReturnsToText(std::string &str, float multilineWidth)
+{
+
+    float textSize = 0;
+    std::string tmpStr = "";
+    std::string finalStr = "";
+    int curChr = 0;
+    while (curChr < str.size())
+    {
+
+        if (str[curChr] == '\n')
+        {
+            finalStr += tmpStr + "\n";
+            tmpStr = "";
+        }
+
+        tmpStr += str[curChr];
+        textSize = ImGui::CalcTextSize(tmpStr.c_str()).x;
+
+        if (textSize > multilineWidth)
+        {
+            int lastSpace = tmpStr.size() - 1;
+            while (tmpStr[lastSpace] != ' ' and lastSpace > 0)
+                lastSpace--;
+            if (lastSpace == 0)
+                lastSpace = tmpStr.size() - 2;
+            finalStr += tmpStr.substr(0, lastSpace + 1) + "\r\n";
+            if (lastSpace + 1 > tmpStr.size())
+                tmpStr = "";
+            else
+                tmpStr = tmpStr.substr(lastSpace + 1);
+        }
+        curChr++;
+    }
+    if (tmpStr.size() > 0)
+        finalStr += tmpStr;
+
+    str = finalStr;
+};
 
 void QuestLayer::draw()
 {
@@ -172,7 +133,9 @@ void QuestLayer::draw()
 
         ImGui::SameLine();
         ImGui::InputText("##Search bar", &_search);
-        if (ImGui::BeginTable("List of quests", 2, ImGuiTableFlags_BordersOuter | ImGuiTableFlags_Resizable))
+        // ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x * 0.5f);
+        ImGui::Columns(2);
+        if (ImGui::BeginListBox("##quests"))
         {
             for (int i = 0; i < _quests.size(); i++)
             {
@@ -189,13 +152,72 @@ void QuestLayer::draw()
                     }
                 }
 
-                if (renderQuest(_quests[i]))
+                if (ImGui::Selectable(_quests[i].name.c_str(), _selectedQuest == i, 0))
                 {
-                    _quests.erase(_quests.begin() + i);
-                    i--;
+                    _selectedQuest = i;
                 }
             }
-            ImGui::EndTable();
+            ImGui::EndListBox();
+        }
+        ImGui::NextColumn();
+        if (_selectedQuest != -1)
+        {
+            std::string popupName = "Confirm delete quest: " + std::to_string(_quests[_selectedQuest].id);
+            if(ImGui::Button("Delete"))
+            {
+                ImGui::OpenPopup(popupName.c_str());
+            }
+
+            if (ImGui::BeginPopup(popupName.c_str()))
+            {
+                ImGui::Text("Are you sure you want to delete quest %ld: %s", _quests[_selectedQuest].id, _quests[_selectedQuest].name.c_str());
+                ImGui::Spacing();
+
+                if (ImGui::Button("Yes"))
+                {
+                    char *errmsg = nullptr;
+                    std::string sql = "DELETE FROM Quest WHERE Id=" + std::to_string(_quests[_selectedQuest].id);
+                    int rc = sqlite3_exec(_db, sql.c_str(), nullptr, nullptr, &errmsg);
+                    if (rc)
+                    {
+                        std::cout << "There was an error deleting this quest: " << errmsg << std::endl;
+                    } else {
+                        _quests.erase(_quests.begin() + _selectedQuest);
+                        _selectedQuest = -1;
+                        ImGui::EndPopup();
+                        ImGui::End();
+                        return;
+                    }
+                    ImGui::CloseCurrentPopup();
+                }
+
+                ImGui::SameLine();
+                if (ImGui::Button("No"))
+                {
+                    ImGui::CloseCurrentPopup();
+                }
+
+                ImGui::EndPopup();
+            }
+
+            ImGui::BeginGroup();
+            ImGui::Text("Name: ");
+            ImGui::SameLine();
+            if (ImGui::InputText("##name", &_quests[_selectedQuest].name))
+            {
+                updateSql("name", _quests[_selectedQuest].name, _quests[_selectedQuest].id);
+            }
+            ImGui::EndGroup();
+
+            ImGui::BeginGroup();
+            ImGui::Text("Description: ");
+            ImGui::SameLine();
+            if (ImGui::InputTextMultiline("##description", &_quests[_selectedQuest].description, ImVec2(0, 0), ImGuiInputTextFlags_WordWrapping))
+            {
+                updateSql("description", _quests[_selectedQuest].description, _quests[_selectedQuest].id);
+            }
+            ImGui::EndGroup();
+
         }
     }
 

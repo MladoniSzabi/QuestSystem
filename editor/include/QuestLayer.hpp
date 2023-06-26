@@ -19,8 +19,10 @@ private:
     std::vector<Quest> _quests;
     QuestSystem _qs;
     std::string _search = "";
+    long _selectedQuest = -1;
 
-    bool renderQuest(Quest &);
+    void renderQuest(Quest &);
+    void updateSql(const std::string &field, const std::string &value, long id);
 
 public:
     QuestLayer();
