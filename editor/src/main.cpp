@@ -1,13 +1,12 @@
 #include "ImGuiManager.hpp"
-#include "ImGuiLayer.hpp"
-#include "QuestLayer.hpp"
+#include "MainLayer.hpp"
 
 int main()
 {
     ImGuiManager context;
-    QuestLayer l;
+    MainLayer ml;
     context.init();
-    context.addLayer(&l);
+    context.addLayer(&ml);
     context.draw();
     return 0;
 }
