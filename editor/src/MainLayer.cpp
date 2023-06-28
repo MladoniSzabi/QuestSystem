@@ -9,7 +9,7 @@ MainLayer::MainLayer()
     _fileDialog.SetTypeFilters({".db"});
 
     std::shared_ptr<QuestLayer> ql = std::make_shared<QuestLayer>(std::ref(_db), std::ref(_qs));
-    addEventListener("dbChanged", ql.get());
+    _eventListeners["dbChanged"].push_back(ql.get());
     _childLayers["quests"] = ql;
 }
 
@@ -37,10 +37,6 @@ void MainLayer::dispatchEvent(const std::string &eventName, void *eventData)
 void MainLayer::addEventListener(const std::string &eventName, EventListener *listener)
 {
     _eventListeners[eventName].push_back(listener);
-}
-
-void MainLayer::handleEvent(const std::string &eventName, void *eventData)
-{
 }
 
 void MainLayer::draw()

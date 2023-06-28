@@ -12,7 +12,7 @@
 #include "EventEmitter.hpp"
 #include "QuestSystem.hpp"
 
-class MainLayer : public ImGuiLayer, public EventListener, public EventEmitter
+class MainLayer : public ImGuiLayer, public EventEmitter
 {
 private:
     sqlite3 *_db = nullptr;
@@ -29,7 +29,6 @@ public:
     void draw() override;
 
     void addEventListener(const std::string &eventName, EventListener *listener) override;
-    void handleEvent(const std::string &eventName, void *eventData) override;
 };
 
 #endif // MAINLAYER_HPP_

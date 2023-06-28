@@ -15,6 +15,24 @@ QuestLayer::QuestLayer(std::reference_wrapper<sqlite3 *> db, std::reference_wrap
 {
 }
 
+void QuestLayer::addEventListener(const std::string &eventName, EventListener *eventListener)
+{
+    _eventListeners[eventName].push_back(eventListener);
+}
+
+void QuestLayer::dispatchEvent(const std::string &eventName, void *eventData)
+{
+    if (_eventListeners.find(eventName) == _eventListeners.end())
+    {
+        std::cout << "Event: " << eventName << " has no event listeners" << std::endl;
+        return;
+    }
+    for (EventListener *l : _eventListeners[eventName])
+    {
+        l->handleEvent(eventName, eventData);
+    }
+}
+
 void QuestLayer::handleEvent(const std::string &eventName, void *eventData)
 {
     if (eventName == "dbChanged")
@@ -99,6 +117,7 @@ void QuestLayer::draw()
             if (ImGui::Selectable(_quests[i].name.c_str(), _selectedQuest == i, 0))
             {
                 _selectedQuest = i;
+                dispatchEvent("selectedQuest", (void *)&_selectedQuest);
             }
         }
         ImGui::EndListBox();
