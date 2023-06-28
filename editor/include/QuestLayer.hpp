@@ -11,6 +11,7 @@
 #include "QuestSystem.hpp"
 #include "Quest.hpp"
 #include "EventListener.hpp"
+#include "EventEmitter.hpp"
 
 class QuestLayer : public ImGuiLayer, public EventListener, public EventEmitter
 {
@@ -19,11 +20,10 @@ private:
     std::reference_wrapper<QuestSystem> _qs;
     std::vector<Quest> _quests;
     std::string _search = "";
-    std::unordered_map<std::string, std::vector<EventListener*>> _eventListeners;
+    std::unordered_map<std::string, std::vector<EventListener *>> _eventListeners;
     long _selectedQuest = -1;
 
     void renderQuest(Quest &);
-    void updateSql(const std::string &field, const std::string &value, long id);
     void dispatchEvent(const std::string &eventName, void *eventData);
 
 public:

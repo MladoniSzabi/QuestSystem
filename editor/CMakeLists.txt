@@ -26,6 +26,8 @@ add_executable(editor
     src/ImGuiManager.cpp
     src/QuestLayer.cpp
     src/MainLayer.cpp
+    src/StageLayer.cpp
+    src/util.cpp
 
     ../vendor/src/imgui/imgui.cpp
     ../vendor/src/imgui/imgui_demo.cpp

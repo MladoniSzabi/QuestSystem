@@ -1,7 +1,9 @@
 #include "MainLayer.hpp"
 
 #include <iostream>
+
 #include "QuestLayer.hpp"
+#include "StageLayer.hpp"
 
 MainLayer::MainLayer()
 {
@@ -10,7 +12,11 @@ MainLayer::MainLayer()
 
     std::shared_ptr<QuestLayer> ql = std::make_shared<QuestLayer>(std::ref(_db), std::ref(_qs));
     _eventListeners["dbChanged"].push_back(ql.get());
-    _childLayers["quests"] = ql;
+    _childLayers.push_back({"quests", ql});
+
+    std::shared_ptr<StageLayer> sl = std::make_shared<StageLayer>(std::ref(_db), std::ref(_qs));
+    ql->addEventListener("selectedQuest", sl.get());
+    _childLayers.push_back({"stages", sl});
 }
 
 MainLayer::~MainLayer()
@@ -66,9 +72,10 @@ void MainLayer::draw()
         ImGui::EndMenuBar();
     }
 
-    if (ImGui::BeginTabBar("tabsBar"))
+    if (ImGui::BeginTabBar("tabsBar", ImGuiTabBarFlags_Reorderable |
+                                          ImGuiTabBarFlags_FittingPolicyMask_))
     {
-        for (auto const &item : _childLayers)
+        for (auto item : _childLayers)
         {
             if (ImGui::BeginTabItem(item.first.c_str()))
             {
@@ -94,6 +101,5 @@ void MainLayer::draw()
         _fileDialog.ClearSelected();
         _qs.setDatabase(_db);
         dispatchEvent("dbChanged", _db);
-        //_quests = _qs.getAllQuests();
     }
 }

@@ -19,7 +19,7 @@ private:
     ImGui::FileBrowser _fileDialog;
     QuestSystem _qs;
     long _selectedQuest = -1;
-    std::unordered_map<std::string, std::shared_ptr<ImGuiLayer>> _childLayers;
+    std::vector<std::pair<std::string, std::shared_ptr<ImGuiLayer>>> _childLayers;
     std::unordered_map<std::string, std::vector<EventListener *>> _eventListeners;
     void dispatchEvent(const std::string &eventName, void *eventData);
 

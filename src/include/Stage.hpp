@@ -18,6 +18,14 @@ struct Stage
         description = fields[2];
         order = std::stol(fields[3]);
     }
+
+    Stage(long _id, long _questId, std::string _description, long _order)
+    {
+        id = _id;
+        questId = _questId;
+        description = _description;
+        order = _order;
+    }
 };
 
 #endif // STAGE_HPP_
