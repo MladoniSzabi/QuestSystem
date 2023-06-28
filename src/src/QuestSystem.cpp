@@ -119,15 +119,35 @@ std::vector<Stage> QuestSystem::getActiveStages()
 {
     std::string sql = "SELECT Stage.* FROM Stage LEFT JOIN PROGRESS ON Stage.Id=Progress.StageId WHERE Progress.StageId IS NOT NULL";
     char *errorStr;
-    SqlReturn questArray;
-    int errorCode = sqlite3_exec(_questDatabaseConn, sql.c_str(), callback, (void *)&questArray, &errorStr);
+    SqlReturn stageArray;
+    int errorCode = sqlite3_exec(_questDatabaseConn, sql.c_str(), callback, (void *)&stageArray, &errorStr);
     if (errorCode)
     {
         return {};
     }
 
     std::vector<Stage> stages;
-    for (std::vector<std::string> &stage : questArray)
+    for (auto &stage : stageArray)
+    {
+        stages.push_back(Stage(stage));
+    }
+
+    return stages;
+}
+
+std::vector<Stage> QuestSystem::getStagesForQuest(long questId)
+{
+    std::string sql = "SELECT * FROM Stage WHERE QuestId = " + std::to_string(questId);
+    char *errorStr;
+    SqlReturn stagesArray;
+    int errorCode = sqlite3_exec(_questDatabaseConn, sql.c_str(), callback, (void *)&stagesArray, &errorStr);
+    if (errorCode)
+    {
+        return {};
+    }
+
+    std::vector<Stage> stages;
+    for (auto &stage : stagesArray)
     {
         stages.push_back(Stage(stage));
     }

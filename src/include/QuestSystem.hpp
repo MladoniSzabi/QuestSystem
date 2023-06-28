@@ -30,6 +30,8 @@ public:
 
     std::vector<Quest> getActiveQuests();
     std::vector<Stage> getActiveStages();
+
+    std::vector<Stage> getStagesForQuest(long questId);
 };
 
 #endif // QUESTSYSTEM_HPP_

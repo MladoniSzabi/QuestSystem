@@ -72,3 +72,14 @@ TEST_F(QuestSystemFixture, TestGetQuests)
 {
     EXPECT_EQ(qs.getAllQuests().size(), 2);
 }
+
+TEST_F(QuestSystemFixture, TestGetStageForQuest)
+{
+    std::vector<Stage> s = qs.getStagesForQuest(1);
+    for (auto &stage : s)
+    {
+        EXPECT_EQ(stage.questId, 1);
+    }
+
+    EXPECT_EQ(s.size(), 2);
+}
