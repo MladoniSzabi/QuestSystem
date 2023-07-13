@@ -63,7 +63,7 @@ TEST_F(QuestSystemFixture, TestNoActive)
 TEST_F(QuestSystemFixture, TestStartQuest)
 {
     EXPECT_EQ(qs.getActiveQuests().size(), 0);
-    char *error = qs.startQuest(1);
+    const char *error = qs.startQuest(1);
     EXPECT_EQ(error, nullptr) << error;
     EXPECT_EQ(qs.getActiveQuests().size(), 1);
     std::vector<Stage> as = qs.getActiveStages();

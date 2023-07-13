@@ -24,8 +24,8 @@ public:
     // Used for testing.
     void setDatabase(sqlite3 *connection) { _questDatabaseConn = connection; }
 
-    char *startQuest(long questId);
-    char *startQuest(const std::string &questName);
+    const char *startQuest(long questId);
+    const char *startQuest(const std::string &questName);
 
     std::vector<Quest> getAllQuests();
 

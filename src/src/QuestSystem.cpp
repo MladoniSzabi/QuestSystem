@@ -41,7 +41,7 @@ void QuestSystem::close()
     _questDatabaseConn = nullptr;
 }
 
-char *QuestSystem::startQuest(long questId)
+const char *QuestSystem::startQuest(long questId)
 {
     std::string select = "SELECT Id FROM Stage WHERE QuestId=" + std::to_string(questId) + " AND Level=0;";
     SqlReturn sqlReturn;
@@ -61,7 +61,7 @@ char *QuestSystem::startQuest(long questId)
     return errorStr;
 }
 
-char *QuestSystem::startQuest(const std::string &questName)
+const char *QuestSystem::startQuest(const std::string &questName)
 {
     std::string getQuestIdSql = "SELECT Stage.Id FROM Stage INNER JOIN Quest ON Stage.QuestId=Quest.Id WHERE Quest.Name='" + questName + "' AND Stage.Level=0;";
     char *errorStr = nullptr;
