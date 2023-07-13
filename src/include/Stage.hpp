@@ -4,6 +4,18 @@
 #include <string>
 #include <vector>
 
+/*
+Schema:
+
+CREATE TABLE Stage(
+    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+    QuestId INTEGER NOT NULL,
+    Description TEXT,
+    Level INTEGER,
+    FOREIGN KEY (QuestId) REFERENCES Quest(Id)
+)
+*/
+
 struct Stage
 {
     long id;

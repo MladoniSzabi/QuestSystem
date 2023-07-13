@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <unordered_map>
 
 #include <sqlite/sqlite3.h>
 
@@ -18,13 +19,13 @@ public:
     QuestSystem();
     ~QuestSystem();
 
-    bool open(std::string questDatabaseFile);
+    bool open(const std::string &questDatabaseFile);
     void close();
-    // Used for testing
+    // Used for testing.
     void setDatabase(sqlite3 *connection) { _questDatabaseConn = connection; }
 
     char *startQuest(long questId);
-    char *startQuest(std::string questName);
+    char *startQuest(const std::string &questName);
 
     std::vector<Quest> getAllQuests();
 
@@ -32,6 +33,9 @@ public:
     std::vector<Stage> getActiveStages();
 
     std::vector<Stage> getStagesForQuest(long questId);
+
+    // Returns the quests that the player can start with its current inventory/stats.
+    std::vector<Quest> getAvailableQuests(const std::unordered_map<std::string, double> &info);
 };
 
 #endif // QUESTSYSTEM_HPP_

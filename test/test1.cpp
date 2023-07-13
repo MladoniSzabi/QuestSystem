@@ -1,6 +1,8 @@
+#include <sstream>
 #include <gtest/gtest.h>
 #include <sqlite/sqlite3.h>
 #include "QuestSystem.hpp"
+#include "Quest.hpp"
 
 class QuestSystemFixture : public ::testing::Test
 {
@@ -18,18 +20,24 @@ protected:
         int rc = sqlite3_open(":memory:", &db);
         ASSERT_EQ(rc, 0) << sqlite3_errmsg(db);
 
+        std::stringstream sql;
+        sql << "CREATE TABLE Quest(Id INTEGER PRIMARY KEY AUTOINCREMENT, Name TEXT UNIQUE NOT NULL, Description TEXT);"
+            << "CREATE TABLE Stage(Id INTEGER PRIMARY KEY AUTOINCREMENT, QuestId INTEGER NOT NULL, Description TEXT,"
+            << "    Level INTEGER, FOREIGN KEY (QuestId) REFERENCES Quest(Id));"
+            << "CREATE TABLE Progress(Id INTEGER PRIMARY KEY AUTOINCREMENT, StageId INTEGER NOT NULL, Finished INTEGER,"
+            << "    FOREIGN KEY (StageId) REFERENCES Stage(Id));"
+            << "CREATE TABLE Quest_Requirements(Id INTEGER PRIMARY KEY AUTOINCREMENT, QuestId INTEGER NOT NULL, Item TEXT,"
+            << "    Operand INTEGER, Value REAL, FOREIGN KEY (QuestId) REFERENCES Quest(Id));"
+            << "INSERT INTO Quest(Name, Description) VALUES ('Hello, World!', 'This is the first quest you will go on!'), ('Goodbye, Wold!', 'Test');"
+            << "INSERT INTO Stage(QuestId, Description, Level) VALUES (1, 'Step 1', 0), (1, 'Step 2', 1), (2, 'Test1', 0);"
+            << "INSERT INTO Quest_Requirements(QuestId, Item, Operand, Value) VALUES (1, 'level', " << std::to_string(GREATER_THAN_OR_EQUAL) << ", 2);"
+            << "INSERT INTO Quest_Requirements(QuestId, Item, Operand, Value) VALUES (2, 'level', " << std::to_string(GREATER_THAN_OR_EQUAL) << ", 3);"
+            << "INSERT INTO Quest_Requirements(QuestId, Item, Operand, Value) VALUES (2, 'place', " << std::to_string(EQUAL) << ", 1);";
+
         // Create Quest Database
         rc = sqlite3_exec(
             db,
-            "\
-                CREATE TABLE Quest(Id INTEGER PRIMARY KEY AUTOINCREMENT, Name TEXT UNIQUE NOT NULL, Description TEXT);\
-                CREATE TABLE Stage(Id INTEGER PRIMARY KEY AUTOINCREMENT, QuestId INTEGER NOT NULL, Description TEXT,\
-                    Level INTEGER, FOREIGN KEY (QuestId) REFERENCES Quest(Id));\
-                CREATE TABLE Progress(Id INTEGER PRIMARY KEY AUTOINCREMENT, StageId INTEGER NOT NULL, Finished INTEGER,\
-                    FOREIGN KEY (StageId) REFERENCES Stage(Id));\
-                INSERT INTO Quest(Name, Description) VALUES ('Hello, World!', 'This is the first quest you will go on!'), ('Goodbye, Wold!', 'Test');\
-                INSERT INTO Stage(QuestId, Description, Level) VALUES (1, 'Step 1', 0), (1, 'Step 2', 1), (2, 'Test1', 0);\
-            ",
+            sql.str().c_str(),
             nullptr,
             nullptr,
             &errmsg);
@@ -82,4 +90,26 @@ TEST_F(QuestSystemFixture, TestGetStageForQuest)
     }
 
     EXPECT_EQ(s.size(), 2);
+}
+
+TEST_F(QuestSystemFixture, TestAvailableQuests)
+{
+    std::unordered_map<std::string, double> info;
+    std::vector<Quest> q;
+    q = qs.getAvailableQuests(info);
+    EXPECT_EQ(q.size(), 0);
+    info["level"] = 2;
+    q = qs.getAvailableQuests(info);
+    EXPECT_EQ(q.size(), 1);
+    EXPECT_EQ(q[0].id, 1);
+    info["level"] = 3;
+    info["place"] = 0;
+    q = qs.getAvailableQuests(info);
+    EXPECT_EQ(q.size(), 1);
+    EXPECT_EQ(q[0].id, 1);
+    info["place"] = 1;
+    q = qs.getAvailableQuests(info);
+    EXPECT_EQ(q.size(), 2);
+    EXPECT_EQ(q[0].id, 1);
+    EXPECT_EQ(q[1].id, 2);
 }
