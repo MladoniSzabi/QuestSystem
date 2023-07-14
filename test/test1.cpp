@@ -30,9 +30,9 @@ protected:
             << "    Operand INTEGER, Value REAL, FOREIGN KEY (QuestId) REFERENCES Quest(Id));"
             << "INSERT INTO Quest(Name, Description) VALUES ('Hello, World!', 'This is the first quest you will go on!'), ('Goodbye, Wold!', 'Test');"
             << "INSERT INTO Stage(QuestId, Description, Level) VALUES (1, 'Step 1', 0), (1, 'Step 2', 1), (2, 'Test1', 0);"
-            << "INSERT INTO Quest_Requirements(QuestId, Item, Operand, Value) VALUES (1, 'level', " << std::to_string(GREATER_THAN_OR_EQUAL) << ", 2);"
-            << "INSERT INTO Quest_Requirements(QuestId, Item, Operand, Value) VALUES (2, 'level', " << std::to_string(GREATER_THAN_OR_EQUAL) << ", 3);"
-            << "INSERT INTO Quest_Requirements(QuestId, Item, Operand, Value) VALUES (2, 'place', " << std::to_string(EQUAL) << ", 1);";
+            << "INSERT INTO Quest_Requirements(QuestId, Item, Operand, Value) VALUES (1, 'level', " << std::to_string((int)Operand::GREATER_THAN_OR_EQUAL) << ", 2);"
+            << "INSERT INTO Quest_Requirements(QuestId, Item, Operand, Value) VALUES (2, 'level', " << std::to_string((int)Operand::GREATER_THAN_OR_EQUAL) << ", 3);"
+            << "INSERT INTO Quest_Requirements(QuestId, Item, Operand, Value) VALUES (2, 'place', " << std::to_string((int)Operand::EQUAL) << ", 1);";
 
         // Create Quest Database
         rc = sqlite3_exec(

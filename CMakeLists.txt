@@ -9,6 +9,7 @@ add_library(out STATIC
     vendor/src/sqlite/sqlite3.c
 
     src/src/QuestSystem.cpp
+    src/src/Requirement.cpp
 )
 
 add_subdirectory(editor)
