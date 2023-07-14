@@ -36,6 +36,7 @@ public:
 
     // Returns the quests that the player can start with its current inventory/stats.
     std::vector<Quest> getAvailableQuests(const std::unordered_map<std::string, double> &info);
+    bool isQuestAvailable(long questId, const std::unordered_map<std::string, double> &info);
 };
 
 #endif // QUESTSYSTEM_HPP_

@@ -98,18 +98,26 @@ TEST_F(QuestSystemFixture, TestAvailableQuests)
     std::vector<Quest> q;
     q = qs.getAvailableQuests(info);
     EXPECT_EQ(q.size(), 0);
+    EXPECT_FALSE(qs.isQuestAvailable(1, info));
+    EXPECT_FALSE(qs.isQuestAvailable(2, info));
     info["level"] = 2;
     q = qs.getAvailableQuests(info);
     EXPECT_EQ(q.size(), 1);
     EXPECT_EQ(q[0].id, 1);
+    EXPECT_TRUE(qs.isQuestAvailable(1, info));
+    EXPECT_FALSE(qs.isQuestAvailable(2, info));
     info["level"] = 3;
     info["place"] = 0;
     q = qs.getAvailableQuests(info);
     EXPECT_EQ(q.size(), 1);
     EXPECT_EQ(q[0].id, 1);
+    EXPECT_TRUE(qs.isQuestAvailable(1, info));
+    EXPECT_FALSE(qs.isQuestAvailable(2, info));
     info["place"] = 1;
     q = qs.getAvailableQuests(info);
     EXPECT_EQ(q.size(), 2);
     EXPECT_EQ(q[0].id, 1);
     EXPECT_EQ(q[1].id, 2);
+    EXPECT_TRUE(qs.isQuestAvailable(1, info));
+    EXPECT_TRUE(qs.isQuestAvailable(2, info));
 }

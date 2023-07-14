@@ -215,3 +215,25 @@ std::vector<Quest> QuestSystem::getAvailableQuests(const std::unordered_map<std:
 
     return retval;
 }
+
+bool QuestSystem::isQuestAvailable(long questId, const std::unordered_map<std::string, double> &info)
+{
+    std::string sql = "SELECT * FROM Quest INNER JOIN Quest_Requirements ON Quest.Id = Quest_Requirements.QuestId Where Quest.Id = " + std::to_string(questId);
+    char *errorStr = nullptr;
+    SqlReturn quests;
+    int errorCode = sqlite3_exec(_questDatabaseConn, sql.c_str(), callback, (void *)&quests, &errorStr);
+    if (errorCode)
+    {
+        std::cout << sql << std::endl
+                  << errorStr << std::endl;
+        return {};
+    }
+
+    Quest q(quests[0]);
+    for (const auto &line : quests)
+    {
+        q.addRequirement(line);
+    }
+
+    return q.areRequirementsMet(info);
+}
