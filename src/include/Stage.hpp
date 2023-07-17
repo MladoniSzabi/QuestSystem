@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+#include "Requirement.hpp"
+
 /*
 Schema:
 
@@ -14,6 +16,15 @@ CREATE TABLE Stage(
     Level INTEGER,
     FOREIGN KEY (QuestId) REFERENCES Quest(Id)
 )
+
+CREATE TABLE Stage_Requirements(
+    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+    QuestId INTEGER NOT NULL,
+    Item TEXT,
+    Operand INTEGER,
+    Value REAL,
+    FOREIGN KEY (QuestId) REFERENCES Quest(Id)
+)
 */
 
 struct Stage
@@ -22,22 +33,25 @@ struct Stage
     long questId;
     std::string description;
     long order;
+    Requirements requirements;
 
-    Stage(std::vector<std::string> fields)
-    {
-        id = std::stol(fields[0]);
-        questId = std::stol(fields[1]);
-        description = fields[2];
-        order = std::stol(fields[3]);
-    }
+    Stage() : id(0),
+              questId(0),
+              description(""),
+              order(0) {}
 
-    Stage(long _id, long _questId, std::string _description, long _order)
-    {
-        id = _id;
-        questId = _questId;
-        description = _description;
-        order = _order;
-    }
+    Stage(std::vector<std::string> fields) : id(std::stol(fields[0])),
+                                             questId(std::stol(fields[1])),
+                                             description(fields[2]),
+                                             order(std::stol(fields[3])) {}
+
+    Stage(long _id, long _questId, std::string _description, long _order) : id(_id),
+                                                                            questId(_questId),
+                                                                            description(_description),
+                                                                            order(_order) {}
+
+    void addRequirement(const std::vector<std::string> &arr) { requirements.addRequirement(arr.begin() + 6); }
+    bool areRequirementsMet(const std::unordered_map<std::string, double> &info) { return requirements.areRequirementsMet(info); }
 };
 
 #endif // STAGE_HPP_

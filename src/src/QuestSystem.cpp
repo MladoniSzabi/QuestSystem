@@ -220,8 +220,8 @@ bool QuestSystem::isQuestAvailable(long questId, const std::unordered_map<std::s
 {
     std::string sql = "SELECT * FROM Quest INNER JOIN Quest_Requirements ON Quest.Id = Quest_Requirements.QuestId Where Quest.Id = " + std::to_string(questId);
     char *errorStr = nullptr;
-    SqlReturn quests;
-    int errorCode = sqlite3_exec(_questDatabaseConn, sql.c_str(), callback, (void *)&quests, &errorStr);
+    SqlReturn questArr;
+    int errorCode = sqlite3_exec(_questDatabaseConn, sql.c_str(), callback, (void *)&questArr, &errorStr);
     if (errorCode)
     {
         std::cout << sql << std::endl
@@ -229,11 +229,101 @@ bool QuestSystem::isQuestAvailable(long questId, const std::unordered_map<std::s
         return {};
     }
 
-    Quest q(quests[0]);
-    for (const auto &line : quests)
+    Quest quest(questArr[0]);
+    for (const auto &line : questArr)
     {
-        q.addRequirement(line);
+        quest.addRequirement(line);
     }
 
-    return q.areRequirementsMet(info);
+    return quest.areRequirementsMet(info);
+}
+
+bool QuestSystem::isStageCompletable(long stageId, const std::unordered_map<std::string, double> &info)
+{
+    std::string sql = "SELECT * FROM Stage INNER JOIN Stage_Requirements ON Stage.Id = Stage_Requirements.StageId Where Stage.Id = " + std::to_string(stageId);
+    char *errorStr = nullptr;
+    SqlReturn stageArr;
+    int errorCode = sqlite3_exec(_questDatabaseConn, sql.c_str(), callback, (void *)&stageArr, &errorStr);
+    if (errorCode)
+    {
+        std::cout << sql << std::endl
+                  << errorStr << std::endl;
+        return false;
+    }
+
+    if (stageArr.size() == 0)
+    {
+        std::cout << "Stage does not exist" << std::endl;
+        return false;
+    }
+
+    Stage stage(stageArr[0]);
+    for (const auto &line : stageArr)
+    {
+        stage.addRequirement(line);
+    }
+
+    return stage.areRequirementsMet(info);
+}
+
+std::vector<Stage> QuestSystem::completeStage(long stageId, const std::unordered_map<std::string, double> &info)
+{
+    if (!isStageCompletable(stageId, info))
+    {
+        return {Stage()};
+    }
+
+    std::string completeStageSql = "INSERT INTO Progress(StageId, Finished) VALUES (" + std::to_string(stageId) + ", 1)";
+    char *errorStr = nullptr;
+    int errorCode = sqlite3_exec(_questDatabaseConn, completeStageSql.c_str(), nullptr, nullptr, &errorStr);
+    if (errorCode)
+    {
+        std::cout << completeStageSql << std::endl
+                  << errorStr << std::endl;
+        return {};
+    }
+
+    std::string getStageSql = "SELECT * FROM Stage Where Id=" + std::to_string(stageId);
+    errorStr = nullptr;
+    SqlReturn currStageArr;
+    errorCode = sqlite3_exec(_questDatabaseConn, getStageSql.c_str(), callback, (void *)&currStageArr, &errorStr);
+    if (errorCode)
+    {
+        std::cout << getStageSql << std::endl
+                  << errorStr << std::endl;
+        return {};
+    }
+
+    Stage currStage = Stage(currStageArr[0]);
+
+    std::string getNextStageSql = "SELECT * FROM Stage INNER JOIN Stage_Requirements ON Stage.Id = Stage_Requirements.StageId Where Stage.QuestId=" + std::to_string(currStage.questId) + " AND Level = " + std::to_string(currStage.order + 1) + " ORDER BY Level";
+    errorStr = nullptr;
+    SqlReturn stageArr;
+    errorCode = sqlite3_exec(_questDatabaseConn, getNextStageSql.c_str(), callback, (void *)&stageArr, &errorStr);
+    if (errorCode)
+    {
+        std::cout << getNextStageSql << std::endl
+                  << errorStr << std::endl;
+        return {};
+    }
+
+    if (stageArr.size() == 0)
+    {
+        return {};
+    }
+
+    std::vector<Stage> retval;
+    currStage = Stage(stageArr[0]);
+    for (auto &stage : stageArr)
+    {
+        if (currStage.id != std::stol(stage[0]))
+        {
+            retval.push_back(currStage);
+            currStage = Stage(stage);
+        }
+        currStage.addRequirement(stage);
+    }
+    retval.push_back(currStage);
+
+    return retval;
 }

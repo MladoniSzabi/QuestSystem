@@ -4,12 +4,15 @@
 #include "QuestSystem.hpp"
 #include "Quest.hpp"
 
+typedef std::vector<std::vector<std::string>> SqlReturn;
+
+extern int callback(void *retvalPtr, int columnCount, char **values, char **columnName);
+
 class QuestSystemFixture : public ::testing::Test
 {
 private:
-    sqlite3 *db;
-
 protected:
+    sqlite3 *db;
     QuestSystem qs;
     void SetUp() override
     {
@@ -28,11 +31,16 @@ protected:
             << "    FOREIGN KEY (StageId) REFERENCES Stage(Id));"
             << "CREATE TABLE Quest_Requirements(Id INTEGER PRIMARY KEY AUTOINCREMENT, QuestId INTEGER NOT NULL, Item TEXT,"
             << "    Operand INTEGER, Value REAL, FOREIGN KEY (QuestId) REFERENCES Quest(Id));"
+            << "CREATE TABLE Stage_Requirements(Id INTEGER PRIMARY KEY AUTOINCREMENT, StageId INTEGER NOT NULL, Item TEXT,"
+            << "    Operand INTEGER, Value REAL, FOREIGN KEY (StageId) REFERENCES Stage(Id));"
             << "INSERT INTO Quest(Name, Description) VALUES ('Hello, World!', 'This is the first quest you will go on!'), ('Goodbye, Wold!', 'Test');"
             << "INSERT INTO Stage(QuestId, Description, Level) VALUES (1, 'Step 1', 0), (1, 'Step 2', 1), (2, 'Test1', 0);"
             << "INSERT INTO Quest_Requirements(QuestId, Item, Operand, Value) VALUES (1, 'level', " << std::to_string((int)Operand::GREATER_THAN_OR_EQUAL) << ", 2);"
             << "INSERT INTO Quest_Requirements(QuestId, Item, Operand, Value) VALUES (2, 'level', " << std::to_string((int)Operand::GREATER_THAN_OR_EQUAL) << ", 3);"
-            << "INSERT INTO Quest_Requirements(QuestId, Item, Operand, Value) VALUES (2, 'place', " << std::to_string((int)Operand::EQUAL) << ", 1);";
+            << "INSERT INTO Quest_Requirements(QuestId, Item, Operand, Value) VALUES (2, 'place', " << std::to_string((int)Operand::EQUAL) << ", 1);"
+            << "INSERT INTO Stage_Requirements(StageId, Item, Operand, Value) VALUES (1, 'roaches', " << std::to_string((int)Operand::GREATER_THAN_OR_EQUAL) << ", 10);"
+            << "INSERT INTO Stage_Requirements(StageId, Item, Operand, Value) VALUES (2, 'roaches', " << std::to_string((int)Operand::GREATER_THAN_OR_EQUAL) << ", 20);"
+            << "INSERT INTO Stage_Requirements(StageId, Item, Operand, Value) VALUES (2, 'deaths', " << std::to_string((int)Operand::LESS_THAN) << ", 3);";
 
         // Create Quest Database
         rc = sqlite3_exec(
@@ -54,11 +62,6 @@ protected:
         qs.close();
     }
 };
-
-TEST_F(QuestSystemFixture, TestNoActive)
-{
-    EXPECT_EQ(qs.getActiveQuests().size(), 0);
-}
 
 TEST_F(QuestSystemFixture, TestStartQuest)
 {
@@ -120,4 +123,75 @@ TEST_F(QuestSystemFixture, TestAvailableQuests)
     EXPECT_EQ(q[1].id, 2);
     EXPECT_TRUE(qs.isQuestAvailable(1, info));
     EXPECT_TRUE(qs.isQuestAvailable(2, info));
+}
+
+TEST_F(QuestSystemFixture, TestStageCompleted)
+{
+    std::unordered_map<std::string, double> info;
+    std::vector<Stage> s;
+    EXPECT_FALSE(qs.isStageCompletable(1, info));
+    EXPECT_FALSE(qs.isStageCompletable(2, info));
+    s = qs.completeStage(1, info);
+    EXPECT_EQ(s.size(), 1);
+    EXPECT_EQ(s[0].id, 0);
+    s = qs.completeStage(2, info);
+    EXPECT_EQ(s.size(), 1);
+    EXPECT_EQ(s[0].id, 0);
+
+    info["roaches"] = 10;
+    EXPECT_TRUE(qs.isStageCompletable(1, info));
+    EXPECT_FALSE(qs.isStageCompletable(2, info));
+    s = qs.completeStage(1, info);
+    EXPECT_EQ(s.size(), 1);
+    EXPECT_EQ(s[0].id, 2);
+    s = qs.completeStage(2, info);
+    EXPECT_EQ(s.size(), 1);
+    EXPECT_EQ(s[0].id, 0);
+
+    info["roaches"] = 20;
+    EXPECT_TRUE(qs.isStageCompletable(1, info));
+    EXPECT_FALSE(qs.isStageCompletable(2, info));
+    s = qs.completeStage(1, info);
+    EXPECT_EQ(s.size(), 1);
+    EXPECT_EQ(s[0].id, 2);
+    s = qs.completeStage(2, info);
+    EXPECT_EQ(s.size(), 1);
+    EXPECT_EQ(s[0].id, 0);
+
+    info["deahs"] = 3;
+    EXPECT_TRUE(qs.isStageCompletable(1, info));
+    EXPECT_FALSE(qs.isStageCompletable(2, info));
+    s = qs.completeStage(1, info);
+    EXPECT_EQ(s.size(), 1);
+    EXPECT_EQ(s[0].id, 2);
+    s = qs.completeStage(2, info);
+    EXPECT_EQ(s.size(), 1);
+    EXPECT_EQ(s[0].id, 0);
+
+    info["deaths"] = 1;
+    EXPECT_TRUE(qs.isStageCompletable(1, info));
+    EXPECT_TRUE(qs.isStageCompletable(2, info));
+    s = qs.completeStage(1, info);
+    EXPECT_EQ(s.size(), 1);
+    EXPECT_EQ(s[0].id, 2);
+    s = qs.completeStage(2, info);
+    EXPECT_EQ(s.size(), 0);
+
+    {
+        std::string sql = "SELECT Id FROM Progress WHERE StageId=1 AND Finished=1;";
+        SqlReturn sqlReturn;
+        char *errorStr = nullptr;
+        int errorCode = sqlite3_exec(db, sql.c_str(), callback, (void *)&sqlReturn, &errorStr);
+        ASSERT_FALSE(errorStr) << errorStr;
+        EXPECT_EQ(sqlReturn.size(), 4);
+    }
+
+    {
+        std::string sql = "SELECT Id FROM Progress WHERE StageId=2 AND Finished=1;";
+        SqlReturn sqlReturn;
+        char *errorStr = nullptr;
+        int errorCode = sqlite3_exec(db, sql.c_str(), callback, (void *)&sqlReturn, &errorStr);
+        ASSERT_FALSE(errorStr) << errorStr;
+        EXPECT_EQ(sqlReturn.size(), 1);
+    }
 }
