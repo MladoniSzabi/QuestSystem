@@ -33,7 +33,7 @@ protected:
             << "    Operand INTEGER, Value REAL, FOREIGN KEY (QuestId) REFERENCES Quest(Id));"
             << "CREATE TABLE Stage_Requirements(Id INTEGER PRIMARY KEY AUTOINCREMENT, StageId INTEGER NOT NULL, Item TEXT,"
             << "    Operand INTEGER, Value REAL, FOREIGN KEY (StageId) REFERENCES Stage(Id));"
-            << "INSERT INTO Quest(Name, Description) VALUES ('Hello, World!', 'This is the first quest you will go on!'), ('Goodbye, Wold!', 'Test');"
+            << "INSERT INTO Quest(Name, Description) VALUES ('Hello, World!', 'This is the first quest you will go on!'), ('Goodbye, Wold!', 'Test'), ('Quest 3', 'Quest');"
             << "INSERT INTO Stage(QuestId, Description, Level) VALUES (1, 'Step 1', 0), (1, 'Step 2', 1), (2, 'Test1', 0);"
             << "INSERT INTO Quest_Requirements(QuestId, Item, Operand, Value) VALUES (1, 'level', " << std::to_string((int)Operand::GREATER_THAN_OR_EQUAL) << ", 2);"
             << "INSERT INTO Quest_Requirements(QuestId, Item, Operand, Value) VALUES (2, 'level', " << std::to_string((int)Operand::GREATER_THAN_OR_EQUAL) << ", 3);"
@@ -77,11 +77,13 @@ TEST_F(QuestSystemFixture, TestStartQuest)
     EXPECT_EQ(error, nullptr) << error;
     EXPECT_EQ(qs.getActiveQuests().size(), 2);
     EXPECT_EQ(qs.getActiveStages().size(), 2);
+    std::cout << std::endl;
+    std::cout << std::endl;
 }
 
 TEST_F(QuestSystemFixture, TestGetQuests)
 {
-    EXPECT_EQ(qs.getAllQuests().size(), 2);
+    EXPECT_EQ(qs.getAllQuests().size(), 3);
 }
 
 TEST_F(QuestSystemFixture, TestGetStageForQuest)
@@ -100,25 +102,25 @@ TEST_F(QuestSystemFixture, TestAvailableQuests)
     std::unordered_map<std::string, double> info;
     std::vector<Quest> q;
     q = qs.getAvailableQuests(info);
-    EXPECT_EQ(q.size(), 0);
+    EXPECT_EQ(q.size(), 1);
     EXPECT_FALSE(qs.isQuestAvailable(1, info));
     EXPECT_FALSE(qs.isQuestAvailable(2, info));
     info["level"] = 2;
     q = qs.getAvailableQuests(info);
-    EXPECT_EQ(q.size(), 1);
+    EXPECT_EQ(q.size(), 2);
     EXPECT_EQ(q[0].id, 1);
     EXPECT_TRUE(qs.isQuestAvailable(1, info));
     EXPECT_FALSE(qs.isQuestAvailable(2, info));
     info["level"] = 3;
     info["place"] = 0;
     q = qs.getAvailableQuests(info);
-    EXPECT_EQ(q.size(), 1);
+    EXPECT_EQ(q.size(), 2);
     EXPECT_EQ(q[0].id, 1);
     EXPECT_TRUE(qs.isQuestAvailable(1, info));
     EXPECT_FALSE(qs.isQuestAvailable(2, info));
     info["place"] = 1;
     q = qs.getAvailableQuests(info);
-    EXPECT_EQ(q.size(), 2);
+    EXPECT_EQ(q.size(), 3);
     EXPECT_EQ(q[0].id, 1);
     EXPECT_EQ(q[1].id, 2);
     EXPECT_TRUE(qs.isQuestAvailable(1, info));

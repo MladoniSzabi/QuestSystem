@@ -1,9 +1,16 @@
 #include "Requirement.hpp"
 
+#include <iostream>
+
 void Requirements::addRequirement(const std::string &item, const Requirement &requirement) { requirements[item] = requirement; }
 
 void Requirements::addRequirement(const std::vector<std::string>::const_iterator &iterator)
 {
+    if (*iterator == "" || *(iterator + 1) == "" || *(iterator + 2) == "")
+    {
+        return;
+    }
+
     std::string name = *iterator;
     Operand operand = (Operand)std::stoi(*(iterator + 1));
     double value = std::stod(*(iterator + 2));
