@@ -21,11 +21,13 @@ void StageLayer::draw()
 {
     if (_db.get() == nullptr)
     {
+        ImGui::Text("Open a database first");
         return;
     }
 
     if (_selectedQuestId == -1)
     {
+        ImGui::Text("Select a quest first");
         return;
     }
 
@@ -45,6 +47,8 @@ void StageLayer::draw()
         }
     }
 
+    ImGui::SameLine();
+    ImGui::Text("Search: ");
     ImGui::SameLine();
     ImGui::InputText("##Search bar", &_search);
     ImGui::Columns(2);

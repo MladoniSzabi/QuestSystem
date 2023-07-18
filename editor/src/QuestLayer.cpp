@@ -52,6 +52,7 @@ void QuestLayer::draw()
 {
     if (_db.get() == nullptr)
     {
+        ImGui::Text("Open a database first");
         return;
     }
 
@@ -70,6 +71,8 @@ void QuestLayer::draw()
         }
     }
 
+    ImGui::SameLine();
+    ImGui::Text("Search: ");
     ImGui::SameLine();
     ImGui::InputText("##Search bar", &_search);
     // ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x * 0.5f);
