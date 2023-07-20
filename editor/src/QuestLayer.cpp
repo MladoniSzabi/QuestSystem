@@ -164,6 +164,54 @@ void QuestLayer::draw()
             updateSql(_db, "Quest", "description", _quests[_selectedQuest].description, _quests[_selectedQuest].id);
         }
         ImGui::EndGroup();
+
+        ImGui::BeginGroup();
+        ImGui::Text("Requirements: ");
+        if (ImGui::BeginTable("##requirements", 3, ImGuiTableFlags_Resizable | ImGuiTableFlags_Hideable | ImGuiTableFlags_Sortable))
+        {
+            ImGui::TableNextColumn();
+            ImGui::Text("Name");
+            ImGui::TableNextColumn();
+            ImGui::Text("Operand");
+            ImGui::TableNextColumn();
+            ImGui::Text("Value");
+
+            for (const auto &req_pair : _quests[_selectedQuest].requirements.requirements)
+            {
+                ImGui::PushID(req_pair.second.id);
+                std::string name = req_pair.first;
+                ImGui::TableNextColumn();
+                if (ImGui::InputText("##req_name", &name))
+                {
+                    _quests[_selectedQuest].requirements.requirements[name] = _quests[_selectedQuest].requirements.requirements[req_pair.first];
+                    _quests[_selectedQuest].requirements.requirements.erase(req_pair.first);
+                    updateSql(_db, "Quest_Requirements", "Item", name, _quests[_selectedQuest].requirements.requirements[name].id);
+                    break; // TODO: Stops the editor from crashing but results in a visual artifact. Not sure how to update a key inside a loop.
+                }
+                ImGui::TableNextColumn();
+                const char *operands[] = {"=", "<", "<=", ">", ">=", "!="};
+                int selected = (int)_quests[_selectedQuest].requirements.requirements[name].operand;
+                if (ImGui::Combo("##req_operand", &selected, operands, 6)) // TODO: Not sure why but using IM_ARRAYSIZE like in the demo doesn't work
+                {
+                    _quests[_selectedQuest].requirements.requirements[name].operand = (Operand)selected;
+                    updateSql(_db, "Quest_Requirements", "Operand", std::to_string(selected), _quests[_selectedQuest].requirements.requirements[name].id);
+                }
+                ImGui::TableNextColumn();
+                if (ImGui::InputDouble("##req_value", &_quests[_selectedQuest].requirements.requirements[name].value))
+                {
+                    updateSql(
+                        _db,
+                        "Quest_Requirements",
+                        "Value",
+                        std::to_string(_quests[_selectedQuest].requirements.requirements[name].value),
+                        _quests[_selectedQuest].requirements.requirements[name].id);
+                }
+                ImGui::PopID();
+            }
+
+            ImGui::EndTable();
+        }
+        ImGui::EndGroup();
     }
     ImGui::Columns(1);
 }

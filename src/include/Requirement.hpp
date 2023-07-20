@@ -17,19 +17,20 @@ enum class Operand
 
 struct Requirement
 {
+    long id;
     Operand operand;
     double value;
 
-    Requirement(Operand _op, double _value) : operand(_op), value(_value) {}
+    Requirement(long _id, Operand _op, double _value) : id(_id), operand(_op), value(_value) {}
     Requirement() {}
 };
 
-class Requirements
-{
-private:
-    std::unordered_map<std::string, Requirement> requirements;
+extern std::string operandToString(Operand op);
+extern Operand stringToOperand(const std::string &str);
 
-public:
+struct Requirements
+{
+    std::unordered_map<std::string, Requirement> requirements;
     void addRequirement(const std::string &item, const Requirement &requirement);
     void addRequirement(const std::vector<std::string>::const_iterator &iterator);
     bool areRequirementsMet(const std::unordered_map<std::string, double> &info);

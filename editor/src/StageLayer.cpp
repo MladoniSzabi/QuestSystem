@@ -145,7 +145,55 @@ void StageLayer::draw()
             updateSql(_db, "Stage", "Level", std::to_string(_stages[_selectedStage].order), _stages[_selectedStage].id);
         }
         ImGui::EndGroup();
+
+        ImGui::BeginGroup();
+        ImGui::Text("Requirements: ");
+        if (ImGui::BeginTable("##requirements", 3, ImGuiTableFlags_Resizable | ImGuiTableFlags_Hideable | ImGuiTableFlags_Sortable))
+        {
+            ImGui::TableNextColumn();
+            ImGui::Text("Name");
+            ImGui::TableNextColumn();
+            ImGui::Text("Operand");
+            ImGui::TableNextColumn();
+            ImGui::Text("Value");
+
+            for (const auto &req_pair : _stages[_selectedStage].requirements.requirements)
+            {
+                ImGui::PushID(req_pair.second.id);
+                std::string name = req_pair.first;
+                ImGui::TableNextColumn();
+                if (ImGui::InputText("##req_name", &name))
+                {
+                    _stages[_selectedStage].requirements.requirements[name] = _stages[_selectedStage].requirements.requirements[req_pair.first];
+                    _stages[_selectedStage].requirements.requirements.erase(req_pair.first);
+                    updateSql(_db, "Stage_Requirements", "Item", name, _stages[_selectedStage].requirements.requirements[name].id);
+                    break; // TODO: Stops the editor from crashing but results in a visual artifact. Not sure how to update a key inside a loop.
+                }
+                ImGui::TableNextColumn();
+                const char *operands[] = {"=", "<", "<=", ">", ">=", "!="};
+                int selected = (int)_stages[_selectedStage].requirements.requirements[name].operand;
+                if (ImGui::Combo("##req_operand", &selected, operands, 6)) // TODO: Not sure why but using IM_ARRAYSIZE like in the demo doesn't work
+                {
+                    _stages[_selectedStage].requirements.requirements[name].operand = (Operand)selected;
+                    updateSql(_db, "Stage_Requirements", "Operand", std::to_string(selected), _stages[_selectedStage].requirements.requirements[name].id);
+                }
+                ImGui::TableNextColumn();
+                if (ImGui::InputDouble("##req_value", &_stages[_selectedStage].requirements.requirements[name].value))
+                {
+                    updateSql(
+                        _db,
+                        "Stage_Requirements",
+                        "Value",
+                        std::to_string(_stages[_selectedStage].requirements.requirements[name].value),
+                        _stages[_selectedStage].requirements.requirements[name].id);
+                }
+                ImGui::PopID();
+            }
+            ImGui::EndTable();
+        }
+        ImGui::EndGroup();
     }
+
     ImGui::Columns(1);
 }
 
