@@ -47,7 +47,7 @@ struct Quest
     Quest(long _id, std::string _name, const std::string &_description) : id(_id), name(_name), description(_description) {}
     Quest(const std::vector<std::string> &arr) : id(std::stol(arr[0])), name(arr[1]), description(arr[2]) {}
 
-    void addRequirement(const std::vector<std::string> &arr) { requirements.addRequirement(arr.begin() + 4); }
+    void addRequirement(const std::vector<std::string> &arr) { requirements.addRequirement(arr.begin() + 3); }
     bool areRequirementsMet(const std::unordered_map<std::string, double> &info) { return requirements.areRequirementsMet(info); }
 };
 

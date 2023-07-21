@@ -23,24 +23,20 @@ std::string operandToString(Operand op)
 
 Operand stringToOperand(const std::string &str)
 {
-    switch (str)
-    {
-    case "=":
+    if (str == "=")
         return Operand::EQUAL;
-    case ">":
+    else if (str == ">")
         return Operand::GREATER_THAN;
-    case ">=":
+    else if (str == ">=")
         return Operand::GREATER_THAN_OR_EQUAL;
-    case "<":
+    else if (str == "<")
         return Operand::LESS_THAN;
-    case "<=":
+    else if (str == "<=")
         return Operand::LESS_THAN_OR_EQUAL;
-    case "!=":
+    else if (str == "!=")
         return Operand::NOT_EQUAL;
-    default:
-        std::cout << "String " << str << " is not an operand." << std::endl;
-        return Operand::EQUAL;
-    }
+    std::cout << "String " << str << " is not an operand." << std::endl;
+    return Operand::EQUAL;
 }
 
 void Requirements::addRequirement(const std::string &item, const Requirement &requirement) { requirements[item] = requirement; }
@@ -52,10 +48,11 @@ void Requirements::addRequirement(const std::vector<std::string>::const_iterator
         return;
     }
 
+    // td::cout << *(iterator) << " " << *(iterator + 2) << " " << *(iterator + 3) << " " << *(iterator + 4) << std::endl;
     long id = std::stol(*(iterator));
-    std::string name = *(iterator + 1);
-    Operand operand = (Operand)std::stoi(*(iterator + 2));
-    double value = std::stod(*(iterator + 3));
+    std::string name = *(iterator + 2);
+    Operand operand = (Operand)std::stoi(*(iterator + 3));
+    double value = std::stod(*(iterator + 4));
 
     requirements[name] = Requirement(id, operand, value);
 }

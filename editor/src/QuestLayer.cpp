@@ -104,114 +104,160 @@ void QuestLayer::draw()
         ImGui::EndListBox();
     }
     ImGui::NextColumn();
-    if (_selectedQuest != -1)
+    if (_selectedQuest == -1)
     {
-        std::string popupName = "Confirm delete quest: " + std::to_string(_quests[_selectedQuest].id);
-        if (ImGui::Button("Delete"))
-        {
-            ImGui::OpenPopup(popupName.c_str());
-        }
-
-        if (ImGui::BeginPopup(popupName.c_str()))
-        {
-            ImGui::Text("Are you sure you want to delete quest %ld: %s", _quests[_selectedQuest].id, _quests[_selectedQuest].name.c_str());
-            ImGui::Spacing();
-
-            if (ImGui::Button("Yes"))
-            {
-                char *errmsg = nullptr;
-                // TODO: make sure to delete the stages of this quest as well.
-                std::string sql = "DELETE FROM Quest WHERE Id=" + std::to_string(_quests[_selectedQuest].id);
-                int rc = sqlite3_exec(_db, sql.c_str(), nullptr, nullptr, &errmsg);
-                if (rc)
-                {
-                    std::cout << "There was an error deleting this quest: " << errmsg << std::endl;
-                }
-                else
-                {
-                    _quests.erase(_quests.begin() + _selectedQuest);
-                    _selectedQuest = -1;
-                    ImGui::EndPopup();
-                    ImGui::End();
-                    return;
-                }
-                ImGui::CloseCurrentPopup();
-            }
-
-            ImGui::SameLine();
-            if (ImGui::Button("No"))
-            {
-                ImGui::CloseCurrentPopup();
-            }
-
-            ImGui::EndPopup();
-        }
-
-        ImGui::BeginGroup();
-        ImGui::Text("Name: ");
-        ImGui::SameLine();
-        if (ImGui::InputText("##name", &_quests[_selectedQuest].name))
-        {
-            updateSql(_db, "Quest", "name", _quests[_selectedQuest].name, _quests[_selectedQuest].id);
-        }
-        ImGui::EndGroup();
-
-        ImGui::BeginGroup();
-        ImGui::Text("Description: ");
-        ImGui::SameLine();
-        if (ImGui::InputTextMultiline("##description", &_quests[_selectedQuest].description, ImVec2(0, 0), ImGuiInputTextFlags_WordWrapping))
-        {
-            updateSql(_db, "Quest", "description", _quests[_selectedQuest].description, _quests[_selectedQuest].id);
-        }
-        ImGui::EndGroup();
-
-        ImGui::BeginGroup();
-        ImGui::Text("Requirements: ");
-        if (ImGui::BeginTable("##requirements", 3, ImGuiTableFlags_Resizable | ImGuiTableFlags_Hideable | ImGuiTableFlags_Sortable))
-        {
-            ImGui::TableNextColumn();
-            ImGui::Text("Name");
-            ImGui::TableNextColumn();
-            ImGui::Text("Operand");
-            ImGui::TableNextColumn();
-            ImGui::Text("Value");
-
-            for (const auto &req_pair : _quests[_selectedQuest].requirements.requirements)
-            {
-                ImGui::PushID(req_pair.second.id);
-                std::string name = req_pair.first;
-                ImGui::TableNextColumn();
-                if (ImGui::InputText("##req_name", &name))
-                {
-                    _quests[_selectedQuest].requirements.requirements[name] = _quests[_selectedQuest].requirements.requirements[req_pair.first];
-                    _quests[_selectedQuest].requirements.requirements.erase(req_pair.first);
-                    updateSql(_db, "Quest_Requirements", "Item", name, _quests[_selectedQuest].requirements.requirements[name].id);
-                    break; // TODO: Stops the editor from crashing but results in a visual artifact. Not sure how to update a key inside a loop.
-                }
-                ImGui::TableNextColumn();
-                const char *operands[] = {"=", "<", "<=", ">", ">=", "!="};
-                int selected = (int)_quests[_selectedQuest].requirements.requirements[name].operand;
-                if (ImGui::Combo("##req_operand", &selected, operands, 6)) // TODO: Not sure why but using IM_ARRAYSIZE like in the demo doesn't work
-                {
-                    _quests[_selectedQuest].requirements.requirements[name].operand = (Operand)selected;
-                    updateSql(_db, "Quest_Requirements", "Operand", std::to_string(selected), _quests[_selectedQuest].requirements.requirements[name].id);
-                }
-                ImGui::TableNextColumn();
-                if (ImGui::InputDouble("##req_value", &_quests[_selectedQuest].requirements.requirements[name].value))
-                {
-                    updateSql(
-                        _db,
-                        "Quest_Requirements",
-                        "Value",
-                        std::to_string(_quests[_selectedQuest].requirements.requirements[name].value),
-                        _quests[_selectedQuest].requirements.requirements[name].id);
-                }
-                ImGui::PopID();
-            }
-
-            ImGui::EndTable();
-        }
-        ImGui::EndGroup();
+        ImGui::Columns(1);
+        return;
     }
+
+    std::string popupName = "Confirm delete quest: " + std::to_string(_quests[_selectedQuest].id);
+    if (ImGui::Button("Delete"))
+    {
+        ImGui::OpenPopup(popupName.c_str());
+    }
+
+    if (ImGui::BeginPopup(popupName.c_str()))
+    {
+        ImGui::Text("Are you sure you want to delete quest %ld: %s", _quests[_selectedQuest].id, _quests[_selectedQuest].name.c_str());
+        ImGui::Spacing();
+
+        if (ImGui::Button("Yes"))
+        {
+            char *errmsg = nullptr;
+            // TODO: make sure to delete the stages of this quest as well.
+            std::string sql = "DELETE FROM Quest WHERE Id=" + std::to_string(_quests[_selectedQuest].id);
+            int rc = sqlite3_exec(_db, sql.c_str(), nullptr, nullptr, &errmsg);
+            if (rc)
+            {
+                std::cout << "There was an error deleting this quest: " << errmsg << std::endl;
+            }
+            else
+            {
+                _quests.erase(_quests.begin() + _selectedQuest);
+                _selectedQuest = -1;
+                ImGui::EndPopup();
+                ImGui::End();
+                return;
+            }
+            ImGui::CloseCurrentPopup();
+        }
+
+        ImGui::SameLine();
+        if (ImGui::Button("No"))
+        {
+            ImGui::CloseCurrentPopup();
+        }
+
+        ImGui::EndPopup();
+    }
+
+    ImGui::BeginGroup();
+    ImGui::Text("Name: ");
+    ImGui::SameLine();
+    if (ImGui::InputText("##name", &_quests[_selectedQuest].name))
+    {
+        updateSql(_db, "Quest", "name", _quests[_selectedQuest].name, _quests[_selectedQuest].id);
+    }
+    ImGui::EndGroup();
+
+    ImGui::BeginGroup();
+    ImGui::Text("Description: ");
+    ImGui::SameLine();
+    if (ImGui::InputTextMultiline("##description", &_quests[_selectedQuest].description, ImVec2(0, 0), ImGuiInputTextFlags_WordWrapping))
+    {
+        updateSql(_db, "Quest", "description", _quests[_selectedQuest].description, _quests[_selectedQuest].id);
+    }
+    ImGui::EndGroup();
+
+    ImGui::BeginGroup();
+    ImGui::Text("Requirements: ");
+    if (ImGui::BeginTable("##requirements", 4, ImGuiTableFlags_Resizable | ImGuiTableFlags_Hideable | ImGuiTableFlags_Sortable))
+    {
+        ImGui::TableNextColumn();
+        ImGui::Text("Name");
+        ImGui::TableNextColumn();
+        ImGui::Text("Operand");
+        ImGui::TableNextColumn();
+        ImGui::Text("Value");
+        ImGui::TableNextColumn();
+
+        for (const auto &req_pair : _quests[_selectedQuest].requirements.requirements)
+        {
+            ImGui::PushID(req_pair.second.id);
+            std::string name = req_pair.first;
+            ImGui::TableNextColumn();
+            if (ImGui::InputText("##req_name", &name))
+            {
+                _quests[_selectedQuest].requirements.requirements[name] = _quests[_selectedQuest].requirements.requirements[req_pair.first];
+                _quests[_selectedQuest].requirements.requirements.erase(req_pair.first);
+                updateSql(_db, "Quest_Requirements", "Item", name, _quests[_selectedQuest].requirements.requirements[name].id);
+                break; // TODO: Stops the editor from crashing but results in a visual artifact. Not sure how to update a key inside a loop.
+            }
+            ImGui::TableNextColumn();
+            const char *operands[] = {"=", "<", "<=", ">", ">=", "!="};
+            int selected = (int)_quests[_selectedQuest].requirements.requirements[name].operand;
+            if (ImGui::Combo("##req_operand", &selected, operands, 6)) // TODO: Not sure why but using IM_ARRAYSIZE like in the demo doesn't work
+            {
+                _quests[_selectedQuest].requirements.requirements[name].operand = (Operand)selected;
+                updateSql(_db, "Quest_Requirements", "Operand", std::to_string(selected), _quests[_selectedQuest].requirements.requirements[name].id);
+            }
+            ImGui::TableNextColumn();
+            if (ImGui::InputDouble("##req_value", &_quests[_selectedQuest].requirements.requirements[name].value))
+            {
+                updateSql(
+                    _db,
+                    "Quest_Requirements",
+                    "Value",
+                    std::to_string(_quests[_selectedQuest].requirements.requirements[name].value),
+                    _quests[_selectedQuest].requirements.requirements[name].id);
+            }
+            ImGui::TableNextColumn();
+
+            std::string popupName = "Delete Quest Requirement:" + req_pair.second.id;
+            if (ImGui::Button("Delete"))
+            {
+                ImGui::OpenPopup(popupName.c_str());
+            }
+            if (ImGui::BeginPopup(popupName.c_str()))
+            {
+                ImGui::Text("Are you sure you want to delete this quest requirement?");
+                ImGui::Spacing();
+
+                if (ImGui::Button("Yes"))
+                {
+                    char *errmsg = nullptr;
+                    std::string sql = "DELETE FROM Quest_Requirements WHERE Id=" + std::to_string(req_pair.second.id);
+                    int rc = sqlite3_exec(_db, sql.c_str(), nullptr, nullptr, &errmsg);
+                    if (rc)
+                    {
+                        std::cout << "There was an error deleting this requirement: " << errmsg << std::endl;
+                    }
+                    else
+                    {
+                        _quests[_selectedQuest].requirements.requirements.erase(name);
+                    }
+                    ImGui::CloseCurrentPopup();
+                    ImGui::EndPopup();
+                    ImGui::PopID();
+                    break;
+                }
+
+                ImGui::SameLine();
+                if (ImGui::Button("No"))
+                {
+                    ImGui::CloseCurrentPopup();
+                    ImGui::EndPopup();
+                    ImGui::PopID();
+                    break;
+                }
+                ImGui::EndPopup();
+            }
+
+            ImGui::PopID();
+        }
+
+        ImGui::EndTable();
+    }
+    ImGui::EndGroup();
     ImGui::Columns(1);
 }

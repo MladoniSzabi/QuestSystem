@@ -77,124 +77,168 @@ void StageLayer::draw()
         ImGui::EndListBox();
     }
     ImGui::NextColumn();
-    if (_selectedStage != -1)
+
+    if (_selectedStage == -1)
     {
-        std::string popupName = "Confirm delete stage: " + std::to_string(_stages[_selectedStage].id);
-        if (ImGui::Button("Delete"))
-        {
-            ImGui::OpenPopup(popupName.c_str());
-        }
-
-        if (ImGui::BeginPopup(popupName.c_str()))
-        {
-            ImGui::Text("Are you sure you want to delete stage %ld", _stages[_selectedStage].id);
-            ImGui::Spacing();
-
-            if (ImGui::Button("Yes"))
-            {
-                char *errmsg = nullptr;
-                std::string sql = "DELETE FROM Stage WHERE Id=" + std::to_string(_stages[_selectedStage].id);
-                int rc = sqlite3_exec(_db, sql.c_str(), nullptr, nullptr, &errmsg);
-                if (rc)
-                {
-                    std::cout << "There was an error deleting this stage: " << errmsg << std::endl;
-                }
-                else
-                {
-                    _stages.erase(_stages.begin() + _selectedStage);
-                    _selectedStage = -1;
-                    ImGui::EndPopup();
-                    ImGui::End();
-                    return;
-                }
-                ImGui::CloseCurrentPopup();
-            }
-
-            ImGui::SameLine();
-            if (ImGui::Button("No"))
-            {
-                ImGui::CloseCurrentPopup();
-            }
-
-            ImGui::EndPopup();
-        }
-
-        ImGui::BeginGroup();
-        ImGui::Text("QuestId: ");
-        ImGui::SameLine();
-        if (ImGui::InputLong("##questId", &_stages[_selectedStage].questId))
-        {
-            updateSql(_db, "Stage", "QuestId", std::to_string(_stages[_selectedStage].questId), _stages[_selectedStage].id);
-        }
-        ImGui::EndGroup();
-
-        ImGui::BeginGroup();
-        ImGui::Text("Description: ");
-        ImGui::SameLine();
-        if (ImGui::InputTextMultiline("##description", &_stages[_selectedStage].description, ImVec2(0, 0), ImGuiInputTextFlags_WordWrapping))
-        {
-            updateSql(_db, "Quest", "description", _stages[_selectedStage].description, _stages[_selectedStage].id);
-        }
-        ImGui::EndGroup();
-
-        ImGui::BeginGroup();
-        ImGui::Text("Order: ");
-        ImGui::SameLine();
-        if (ImGui::InputLong("##order", &_stages[_selectedStage].order))
-        {
-            updateSql(_db, "Stage", "Level", std::to_string(_stages[_selectedStage].order), _stages[_selectedStage].id);
-        }
-        ImGui::EndGroup();
-
-        ImGui::BeginGroup();
-        ImGui::Text("Requirements: ");
-        if (ImGui::BeginTable("##requirements", 3, ImGuiTableFlags_Resizable | ImGuiTableFlags_Hideable | ImGuiTableFlags_Sortable))
-        {
-            ImGui::TableNextColumn();
-            ImGui::Text("Name");
-            ImGui::TableNextColumn();
-            ImGui::Text("Operand");
-            ImGui::TableNextColumn();
-            ImGui::Text("Value");
-
-            for (const auto &req_pair : _stages[_selectedStage].requirements.requirements)
-            {
-                ImGui::PushID(req_pair.second.id);
-                std::string name = req_pair.first;
-                ImGui::TableNextColumn();
-                if (ImGui::InputText("##req_name", &name))
-                {
-                    _stages[_selectedStage].requirements.requirements[name] = _stages[_selectedStage].requirements.requirements[req_pair.first];
-                    _stages[_selectedStage].requirements.requirements.erase(req_pair.first);
-                    updateSql(_db, "Stage_Requirements", "Item", name, _stages[_selectedStage].requirements.requirements[name].id);
-                    break; // TODO: Stops the editor from crashing but results in a visual artifact. Not sure how to update a key inside a loop.
-                }
-                ImGui::TableNextColumn();
-                const char *operands[] = {"=", "<", "<=", ">", ">=", "!="};
-                int selected = (int)_stages[_selectedStage].requirements.requirements[name].operand;
-                if (ImGui::Combo("##req_operand", &selected, operands, 6)) // TODO: Not sure why but using IM_ARRAYSIZE like in the demo doesn't work
-                {
-                    _stages[_selectedStage].requirements.requirements[name].operand = (Operand)selected;
-                    updateSql(_db, "Stage_Requirements", "Operand", std::to_string(selected), _stages[_selectedStage].requirements.requirements[name].id);
-                }
-                ImGui::TableNextColumn();
-                if (ImGui::InputDouble("##req_value", &_stages[_selectedStage].requirements.requirements[name].value))
-                {
-                    updateSql(
-                        _db,
-                        "Stage_Requirements",
-                        "Value",
-                        std::to_string(_stages[_selectedStage].requirements.requirements[name].value),
-                        _stages[_selectedStage].requirements.requirements[name].id);
-                }
-                ImGui::PopID();
-            }
-            ImGui::EndTable();
-        }
-        ImGui::EndGroup();
+        ImGui::Columns(1);
+        return;
     }
 
-    ImGui::Columns(1);
+    std::string popupName = "Confirm delete stage: " + std::to_string(_stages[_selectedStage].id);
+    if (ImGui::Button("Delete"))
+    {
+        ImGui::OpenPopup(popupName.c_str());
+    }
+
+    if (ImGui::BeginPopup(popupName.c_str()))
+    {
+        ImGui::Text("Are you sure you want to delete stage %ld", _stages[_selectedStage].id);
+        ImGui::Spacing();
+
+        if (ImGui::Button("Yes"))
+        {
+            char *errmsg = nullptr;
+            std::string sql = "DELETE FROM Stage WHERE Id=" + std::to_string(_stages[_selectedStage].id);
+            int rc = sqlite3_exec(_db, sql.c_str(), nullptr, nullptr, &errmsg);
+            if (rc)
+            {
+                std::cout << "There was an error deleting this stage: " << errmsg << std::endl;
+            }
+            else
+            {
+                _stages.erase(_stages.begin() + _selectedStage);
+                _selectedStage = -1;
+                ImGui::EndPopup();
+                ImGui::End();
+                return;
+            }
+            ImGui::CloseCurrentPopup();
+        }
+
+        ImGui::SameLine();
+        if (ImGui::Button("No"))
+        {
+            ImGui::CloseCurrentPopup();
+        }
+
+        ImGui::EndPopup();
+    }
+
+    ImGui::BeginGroup();
+    ImGui::Text("QuestId: ");
+    ImGui::SameLine();
+    if (ImGui::InputLong("##questId", &_stages[_selectedStage].questId))
+    {
+        updateSql(_db, "Stage", "QuestId", std::to_string(_stages[_selectedStage].questId), _stages[_selectedStage].id);
+    }
+    ImGui::EndGroup();
+
+    ImGui::BeginGroup();
+    ImGui::Text("Description: ");
+    ImGui::SameLine();
+    if (ImGui::InputTextMultiline("##description", &_stages[_selectedStage].description, ImVec2(0, 0), ImGuiInputTextFlags_WordWrapping))
+    {
+        updateSql(_db, "Quest", "description", _stages[_selectedStage].description, _stages[_selectedStage].id);
+    }
+    ImGui::EndGroup();
+
+    ImGui::BeginGroup();
+    ImGui::Text("Order: ");
+    ImGui::SameLine();
+    if (ImGui::InputLong("##order", &_stages[_selectedStage].order))
+    {
+        updateSql(_db, "Stage", "Level", std::to_string(_stages[_selectedStage].order), _stages[_selectedStage].id);
+    }
+    ImGui::EndGroup();
+
+    ImGui::BeginGroup();
+    ImGui::Text("Requirements: ");
+    if (ImGui::BeginTable("##requirements", 4, ImGuiTableFlags_Resizable | ImGuiTableFlags_Hideable | ImGuiTableFlags_Sortable))
+    {
+        ImGui::TableNextColumn();
+        ImGui::Text("Name");
+        ImGui::TableNextColumn();
+        ImGui::Text("Operand");
+        ImGui::TableNextColumn();
+        ImGui::Text("Value");
+        ImGui::TableNextColumn();
+
+        for (const auto &req_pair : _stages[_selectedStage].requirements.requirements)
+        {
+            ImGui::PushID(req_pair.second.id);
+            std::string name = req_pair.first;
+            ImGui::TableNextColumn();
+            if (ImGui::InputText("##req_name", &name))
+            {
+                _stages[_selectedStage].requirements.requirements[name] = _stages[_selectedStage].requirements.requirements[req_pair.first];
+                _stages[_selectedStage].requirements.requirements.erase(req_pair.first);
+                updateSql(_db, "Stage_Requirements", "Item", name, _stages[_selectedStage].requirements.requirements[name].id);
+                break; // TODO: Stops the editor from crashing but results in a visual artifact. Not sure how to update a key inside a loop.
+            }
+            ImGui::TableNextColumn();
+            const char *operands[] = {"=", "<", "<=", ">", ">=", "!="};
+            int selected = (int)req_pair.second.operand;
+            if (ImGui::Combo("##req_operand", &selected, operands, 6)) // TODO: Not sure why but using IM_ARRAYSIZE like in the demo doesn't work
+            {
+                _stages[_selectedStage].requirements.requirements[name].operand = (Operand)selected;
+                updateSql(_db, "Stage_Requirements", "Operand", std::to_string(selected), req_pair.second.id);
+            }
+            ImGui::TableNextColumn();
+            if (ImGui::InputDouble("##req_value", &_stages[_selectedStage].requirements.requirements[name].value))
+            {
+                updateSql(
+                    _db,
+                    "Stage_Requirements",
+                    "Value",
+                    std::to_string(req_pair.second.value),
+                    req_pair.second.id);
+            }
+            ImGui::TableNextColumn();
+
+            std::string popupName = "Delete Stage Requirement: " + std::to_string(req_pair.second.id);
+            if (ImGui::Button("Delete"))
+            {
+                ImGui::OpenPopup(popupName.c_str());
+            }
+            if (ImGui::BeginPopup(popupName.c_str()))
+            {
+                ImGui::Text("Are you sure you want to delete this requirement?");
+                ImGui::Spacing();
+
+                if (ImGui::Button("Yes"))
+                {
+                    char *errmsg = nullptr;
+                    std::string sql = "DELETE FROM Stage_Requirements WHERE Id=" + std::to_string(req_pair.second.id);
+                    int rc = sqlite3_exec(_db, sql.c_str(), nullptr, nullptr, &errmsg);
+                    if (rc)
+                    {
+                        std::cout << "There was an error deleting this requirement: " << errmsg << std::endl;
+                    }
+                    else
+                    {
+                        _stages[_selectedStage].requirements.requirements.erase(name);
+                    }
+                    ImGui::CloseCurrentPopup();
+                    ImGui::EndPopup();
+                    ImGui::PopID();
+                    break;
+                }
+
+                ImGui::SameLine();
+                if (ImGui::Button("No"))
+                {
+                    ImGui::CloseCurrentPopup();
+                    ImGui::EndPopup();
+                    ImGui::PopID();
+                    break;
+                }
+                ImGui::EndPopup();
+            }
+            ImGui::PopID();
+        }
+        ImGui::EndTable();
+    }
+    ImGui::EndGroup();
 }
 
 void StageLayer::handleEvent(const std::string &eventName, void *eventData)

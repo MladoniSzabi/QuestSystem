@@ -50,7 +50,7 @@ struct Stage
                                                                             description(_description),
                                                                             order(_order) {}
 
-    void addRequirement(const std::vector<std::string> &arr) { requirements.addRequirement(arr.begin() + 5); }
+    void addRequirement(const std::vector<std::string> &arr) { requirements.addRequirement(arr.begin() + 4); }
     bool areRequirementsMet(const std::unordered_map<std::string, double> &info) { return requirements.areRequirementsMet(info); }
 };
 
