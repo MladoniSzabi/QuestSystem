@@ -10,13 +10,6 @@ StageLayer::StageLayer(std::reference_wrapper<sqlite3 *> db, std::reference_wrap
 {
 }
 
-static int createStageCallback(void *ptr, int rowCount, char **values, char **rowNames)
-{
-    long *newRow = (long *)newRow;
-    *newRow = atol(values[0]);
-    return 0;
-}
-
 void StageLayer::draw()
 {
     if (_db.get() == nullptr)
@@ -37,7 +30,7 @@ void StageLayer::draw()
         long newRow = 0;
         std::string sql = "INSERT INTO Stage(QuestId, Description, Level) Values(" + std::to_string(_selectedQuestId) + ", '', 0) returning Id";
         if (sqlite3_exec(
-                _db, sql.c_str(), createStageCallback, (void *)&newRow, &errmsg))
+                _db, sql.c_str(), createEntryCallback, (void *)&newRow, &errmsg))
         {
             std::cout << "Error creating stage:" << errmsg << std::endl;
         }
@@ -153,6 +146,23 @@ void StageLayer::draw()
 
     ImGui::BeginGroup();
     ImGui::Text("Requirements: ");
+
+    if (ImGui::Button("Add"))
+    {
+        char *errmsg = nullptr;
+        long newRow = 0;
+        std::string sql = "INSERT INTO Stage_Requirements(Item, StageId, Operand, Value) Values('requirement'," + std::to_string(_stages[_selectedStage].id) + ", 0, 0) returning Id";
+        if (sqlite3_exec(
+                _db, sql.c_str(), createEntryCallback, (void *)&newRow, &errmsg))
+        {
+            std::cout << "Error creating requirement:" << errmsg << std::endl;
+        }
+        else
+        {
+            _stages[_selectedStage].requirements.addRequirement("requirement", Requirement(newRow, Operand::EQUAL, 0));
+        }
+    }
+
     if (ImGui::BeginTable("##requirements", 4, ImGuiTableFlags_Resizable | ImGuiTableFlags_Hideable | ImGuiTableFlags_Sortable))
     {
         ImGui::TableNextColumn();

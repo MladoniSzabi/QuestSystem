@@ -26,3 +26,10 @@ void updateSql(sqlite3 *db, const std::string &table, const std::string &field, 
         std::cout << "Error updating " << field << ": " << errmsg << " | " << sql << std::endl;
     }
 }
+
+int createEntryCallback(void *ptr, int rowCount, char **values, char **rowNames)
+{
+    long *newRow = (long *)newRow;
+    *newRow = atol(values[0]);
+    return 0;
+}

@@ -41,13 +41,6 @@ void QuestLayer::handleEvent(const std::string &eventName, void *eventData)
     }
 }
 
-static int createQuestCallback(void *ptr, int rowCount, char **values, char **rowNames)
-{
-    long *newRow = (long *)newRow;
-    *newRow = atol(values[0]);
-    return 0;
-}
-
 void QuestLayer::draw()
 {
     if (_db.get() == nullptr)
@@ -61,7 +54,7 @@ void QuestLayer::draw()
         char *errmsg = nullptr;
         long newRow = 0;
         if (sqlite3_exec(
-                _db, "INSERT INTO Quest(Name, Description) Values('', '') returning Id", createQuestCallback, (void *)&newRow, &errmsg))
+                _db, "INSERT INTO Quest(Name, Description) Values('', '') returning Id", createEntryCallback, (void *)&newRow, &errmsg))
         {
             std::cout << "Error creating quest:" << errmsg << std::endl;
         }
@@ -171,6 +164,22 @@ void QuestLayer::draw()
 
     ImGui::BeginGroup();
     ImGui::Text("Requirements: ");
+    if (ImGui::Button("Add"))
+    {
+        char *errmsg = nullptr;
+        long newRow = 0;
+        std::string sql = "INSERT INTO Quest_Requirements(Item, QuestId, Operand, Value) Values('requirement'," + std::to_string(_quests[_selectedQuest].id) + ", 0, 0) returning Id";
+        if (sqlite3_exec(
+                _db, sql.c_str(), createEntryCallback, (void *)&newRow, &errmsg))
+        {
+            std::cout << "Error creating requirement:" << errmsg << std::endl;
+        }
+        else
+        {
+            _quests[_selectedQuest].requirements.addRequirement("requirement", Requirement(newRow, Operand::EQUAL, 0));
+        }
+    }
+
     if (ImGui::BeginTable("##requirements", 4, ImGuiTableFlags_Resizable | ImGuiTableFlags_Hideable | ImGuiTableFlags_Sortable))
     {
         ImGui::TableNextColumn();
