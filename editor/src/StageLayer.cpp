@@ -6,8 +6,37 @@
 
 #include "util.hpp"
 
-StageLayer::StageLayer(std::reference_wrapper<sqlite3 *> db, std::reference_wrapper<QuestSystem> qs) : _db(db), _qs(qs)
+StageLayer::StageLayer(std::reference_wrapper<sqlite3 *> db, std::reference_wrapper<QuestSystem> qs) : _qs(qs), _db(db)
 {
+}
+
+void StageLayer::editRequirement(long requirementId, std::string field, std::string value)
+{
+    updateSql(_db, "Stage_Requirements", field, value, requirementId);
+}
+
+void StageLayer::deleteRequirement(long requirementId)
+{
+    char *errmsg = nullptr;
+    std::string sql = "DELETE FROM Stage_Requirements WHERE Id=" + std::to_string(requirementId);
+    int rc = sqlite3_exec(_db, sql.c_str(), nullptr, nullptr, &errmsg);
+    if (rc)
+    {
+        std::cout << "There was an error deleting this requirement: " << errmsg << std::endl;
+    }
+}
+
+Requirement StageLayer::createRequirement()
+{
+    char *errmsg = nullptr;
+    long newRow = 0;
+    std::string sql = "INSERT INTO Stage_Requirements(Item, StageId, Operand, Value) Values('requirement'," + std::to_string(_stages[_selectedStage].id) + ", 0, 0) returning Id";
+    if (sqlite3_exec(
+            _db, sql.c_str(), createEntryCallback, (void *)&newRow, &errmsg))
+    {
+        std::cout << "Error creating requirement:" << errmsg << std::endl;
+    }
+    return Requirement(newRow, Operand::EQUAL, 0);
 }
 
 void StageLayer::draw()
@@ -144,111 +173,17 @@ void StageLayer::draw()
     }
     ImGui::EndGroup();
 
-    ImGui::BeginGroup();
-    ImGui::Text("Requirements: ");
-
-    if (ImGui::Button("Add"))
-    {
-        char *errmsg = nullptr;
-        long newRow = 0;
-        std::string sql = "INSERT INTO Stage_Requirements(Item, StageId, Operand, Value) Values('requirement'," + std::to_string(_stages[_selectedStage].id) + ", 0, 0) returning Id";
-        if (sqlite3_exec(
-                _db, sql.c_str(), createEntryCallback, (void *)&newRow, &errmsg))
-        {
-            std::cout << "Error creating requirement:" << errmsg << std::endl;
-        }
-        else
-        {
-            _stages[_selectedStage].requirements.addRequirement("requirement", Requirement(newRow, Operand::EQUAL, 0));
-        }
-    }
-
-    if (ImGui::BeginTable("##requirements", 4, ImGuiTableFlags_Resizable | ImGuiTableFlags_Hideable | ImGuiTableFlags_Sortable))
-    {
-        ImGui::TableNextColumn();
-        ImGui::Text("Name");
-        ImGui::TableNextColumn();
-        ImGui::Text("Operand");
-        ImGui::TableNextColumn();
-        ImGui::Text("Value");
-        ImGui::TableNextColumn();
-
-        for (const auto &req_pair : _stages[_selectedStage].requirements.requirements)
-        {
-            ImGui::PushID(req_pair.second.id);
-            std::string name = req_pair.first;
-            ImGui::TableNextColumn();
-            if (ImGui::InputText("##req_name", &name))
-            {
-                _stages[_selectedStage].requirements.requirements[name] = _stages[_selectedStage].requirements.requirements[req_pair.first];
-                _stages[_selectedStage].requirements.requirements.erase(req_pair.first);
-                updateSql(_db, "Stage_Requirements", "Item", name, _stages[_selectedStage].requirements.requirements[name].id);
-                break; // TODO: Stops the editor from crashing but results in a visual artifact. Not sure how to update a key inside a loop.
-            }
-            ImGui::TableNextColumn();
-            const char *operands[] = {"=", "<", "<=", ">", ">=", "!="};
-            int selected = (int)req_pair.second.operand;
-            if (ImGui::Combo("##req_operand", &selected, operands, 6)) // TODO: Not sure why but using IM_ARRAYSIZE like in the demo doesn't work
-            {
-                _stages[_selectedStage].requirements.requirements[name].operand = (Operand)selected;
-                updateSql(_db, "Stage_Requirements", "Operand", std::to_string(selected), req_pair.second.id);
-            }
-            ImGui::TableNextColumn();
-            if (ImGui::InputDouble("##req_value", &_stages[_selectedStage].requirements.requirements[name].value))
-            {
-                updateSql(
-                    _db,
-                    "Stage_Requirements",
-                    "Value",
-                    std::to_string(req_pair.second.value),
-                    req_pair.second.id);
-            }
-            ImGui::TableNextColumn();
-
-            std::string popupName = "Delete Stage Requirement: " + std::to_string(req_pair.second.id);
-            if (ImGui::Button("Delete"))
-            {
-                ImGui::OpenPopup(popupName.c_str());
-            }
-            if (ImGui::BeginPopup(popupName.c_str()))
-            {
-                ImGui::Text("Are you sure you want to delete this requirement?");
-                ImGui::Spacing();
-
-                if (ImGui::Button("Yes"))
-                {
-                    char *errmsg = nullptr;
-                    std::string sql = "DELETE FROM Stage_Requirements WHERE Id=" + std::to_string(req_pair.second.id);
-                    int rc = sqlite3_exec(_db, sql.c_str(), nullptr, nullptr, &errmsg);
-                    if (rc)
-                    {
-                        std::cout << "There was an error deleting this requirement: " << errmsg << std::endl;
-                    }
-                    else
-                    {
-                        _stages[_selectedStage].requirements.requirements.erase(name);
-                    }
-                    ImGui::CloseCurrentPopup();
-                    ImGui::EndPopup();
-                    ImGui::PopID();
-                    break;
-                }
-
-                ImGui::SameLine();
-                if (ImGui::Button("No"))
-                {
-                    ImGui::CloseCurrentPopup();
-                    ImGui::EndPopup();
-                    ImGui::PopID();
-                    break;
-                }
-                ImGui::EndPopup();
-            }
-            ImGui::PopID();
-        }
-        ImGui::EndTable();
-    }
-    ImGui::EndGroup();
+    //_requirementsTable.setCurrentRequirements(std::ref(_stages[_selectedStage].requirements));
+    RequirementsTableLayer _requirementsTable(
+        [=](long id, std::string f, std::string v)
+        { this->editRequirement(id, f, v); },
+        [=](long id)
+        { this->deleteRequirement(id); },
+        [=]()
+        { return this->createRequirement(); },
+        std::ref(_stages[_selectedStage].requirements));
+    _requirementsTable.draw();
+    ImGui::Columns(1);
 }
 
 void StageLayer::handleEvent(const std::string &eventName, void *eventData)

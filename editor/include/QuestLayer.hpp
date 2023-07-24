@@ -12,6 +12,7 @@
 #include "Quest.hpp"
 #include "EventListener.hpp"
 #include "EventEmitter.hpp"
+#include "RequirementsTableLayer.hpp"
 
 class QuestLayer : public ImGuiLayer, public EventListener, public EventEmitter
 {
@@ -25,6 +26,10 @@ private:
 
     void renderQuest(Quest &);
     void dispatchEvent(const std::string &eventName, void *eventData);
+
+    void editRequirement(long requirementId, std::string field, std::string value);
+    void deleteRequirement(long requirementId);
+    Requirement createRequirement();
 
 public:
     QuestLayer(std::reference_wrapper<sqlite3 *> db, std::reference_wrapper<QuestSystem> qs);

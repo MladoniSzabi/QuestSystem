@@ -28,6 +28,7 @@ add_executable(editor
     src/MainLayer.cpp
     src/StageLayer.cpp
     src/util.cpp
+    src/RequirementsTableLayer.cpp
 
     ../vendor/src/imgui/imgui.cpp
     ../vendor/src/imgui/imgui_demo.cpp

@@ -11,6 +11,7 @@
 #include "EventListener.hpp"
 #include "Stage.hpp"
 #include "QuestSystem.hpp"
+#include "RequirementsTableLayer.hpp"
 
 class StageLayer : public ImGuiLayer, public EventListener
 {
@@ -22,6 +23,10 @@ private:
     long _selectedQuestId = -1;
     long _selectedStage = -1;
     std::string _search;
+
+    void editRequirement(long requirementId, std::string field, std::string value);
+    void deleteRequirement(long requirementId);
+    Requirement createRequirement();
 
 public:
     StageLayer(std::reference_wrapper<sqlite3 *> db, std::reference_wrapper<QuestSystem> qs);
