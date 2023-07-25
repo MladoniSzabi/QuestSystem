@@ -2,10 +2,10 @@ CMakeFiles/
 cmake_install.cmake
 CMakeCache.txt
 Makefile
-libout.a
+libquestEditor.a
 build
 .vscode
-src/libout.a
+src/libquestEditor.a
 lib/
 test/CTestTestfile.cmake
 test/testing*

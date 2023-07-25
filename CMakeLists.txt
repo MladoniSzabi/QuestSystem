@@ -4,7 +4,7 @@ project(QuestSystem VERSION 0.1)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-add_library(out STATIC
+add_library(questEditor STATIC
 
     vendor/src/sqlite/sqlite3.c
 
@@ -20,6 +20,6 @@ include_directories(
     vendor/include
 )
 
-target_include_directories(out PUBLIC src/include)
-target_include_directories(out PUBLIC vendor/include)
+target_include_directories(questEditor PUBLIC src/include)
+target_include_directories(questEditor PUBLIC vendor/include)
 set(HEADER_FILES src/include/QuestSystem.hpp)

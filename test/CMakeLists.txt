@@ -22,7 +22,7 @@ target_link_libraries(
     GTest::gtest_main
 )
 
-target_link_libraries(testing out)
+target_link_libraries(testing questEditor)
 
 include(GoogleTest)
 gtest_discover_tests(testing)
