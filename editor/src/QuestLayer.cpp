@@ -37,7 +37,7 @@ Requirement QuestLayer::createRequirement()
     {
         std::cout << "Error creating requirement:" << errmsg << std::endl;
     }
-    return Requirement(newRow, Operand::EQUAL, 0);
+    return Requirement(newRow, "requirement", Operand::EQUAL, 0);
 }
 
 void QuestLayer::addEventListener(const std::string &eventName, EventListener *eventListener)

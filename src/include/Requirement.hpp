@@ -1,9 +1,10 @@
 #ifndef REQUIREMENT_HPP_
 #define REQUIREMENT_HPP_
 
-#include <unordered_map>
+#include <set>
 #include <vector>
 #include <string>
+#include <unordered_map>
 
 enum class Operand
 {
@@ -18,10 +19,11 @@ enum class Operand
 struct Requirement
 {
     long id;
+    std::string name;
     Operand operand;
     double value;
 
-    Requirement(long _id, Operand _op, double _value) : id(_id), operand(_op), value(_value) {}
+    Requirement(long _id, std::string _name, Operand _op, double _value) : id(_id), name(_name), operand(_op), value(_value) {}
     Requirement() {}
 };
 
@@ -30,8 +32,8 @@ extern Operand stringToOperand(const std::string &str);
 
 struct Requirements
 {
-    std::unordered_map<std::string, Requirement> requirements;
-    void addRequirement(const std::string &item, const Requirement &requirement);
+    std::vector<Requirement> requirements;
+    void addRequirement(const Requirement &requirement);
     void addRequirement(const std::vector<std::string>::const_iterator &iterator);
     bool areRequirementsMet(const std::unordered_map<std::string, double> &info);
 };

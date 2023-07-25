@@ -39,7 +39,7 @@ Operand stringToOperand(const std::string &str)
     return Operand::EQUAL;
 }
 
-void Requirements::addRequirement(const std::string &item, const Requirement &requirement) { requirements[item] = requirement; }
+void Requirements::addRequirement(const Requirement &requirement) { requirements.push_back(requirement); }
 
 void Requirements::addRequirement(const std::vector<std::string>::const_iterator &iterator)
 {
@@ -54,41 +54,41 @@ void Requirements::addRequirement(const std::vector<std::string>::const_iterator
     Operand operand = (Operand)std::stoi(*(iterator + 3));
     double value = std::stod(*(iterator + 4));
 
-    requirements[name] = Requirement(id, operand, value);
+    requirements.emplace_back(id, name, operand, value);
 }
 
 bool Requirements::areRequirementsMet(const std::unordered_map<std::string, double> &info)
 {
-    for (const auto &pair : requirements)
+    for (const auto &req : requirements)
     {
-        if (info.find(pair.first) == info.end())
+        if (info.find(req.name) == info.end())
             return false;
 
-        switch (pair.second.operand)
+        switch (req.operand)
         {
 
         case Operand::EQUAL:
-            if (info.at(pair.first) != pair.second.value)
+            if (info.at(req.name) != req.value)
                 return false;
             break;
         case Operand::NOT_EQUAL:
-            if (info.at(pair.first) == pair.second.value)
+            if (info.at(req.name) == req.value)
                 return false;
             break;
         case Operand::LESS_THAN:
-            if (info.at(pair.first) >= pair.second.value)
+            if (info.at(req.name) >= req.value)
                 return false;
             break;
         case Operand::GREATER_THAN:
-            if (info.at(pair.first) <= pair.second.value)
+            if (info.at(req.name) <= req.value)
                 return false;
             break;
         case Operand::LESS_THAN_OR_EQUAL:
-            if (info.at(pair.first) > pair.second.value)
+            if (info.at(req.name) > req.value)
                 return false;
             break;
         case Operand::GREATER_THAN_OR_EQUAL:
-            if (info.at(pair.first) < pair.second.value)
+            if (info.at(req.name) < req.value)
                 return false;
             break;
         }

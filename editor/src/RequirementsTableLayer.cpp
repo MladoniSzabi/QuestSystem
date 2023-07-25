@@ -18,7 +18,7 @@ void RequirementsTableLayer::draw()
 
     if (ImGui::Button("Add"))
     {
-        _requirements.get().addRequirement("requirement", _createCallback());
+        _requirements.get().addRequirement(_createCallback());
     }
 
     if (ImGui::BeginTable("##requirements", 4, ImGuiTableFlags_Resizable | ImGuiTableFlags_Hideable | ImGuiTableFlags_Sortable))
@@ -32,34 +32,35 @@ void RequirementsTableLayer::draw()
         ImGui::TableNextColumn();
         // Delete button
 
-        for (const auto &req_pair : _requirements.get().requirements)
+        for (int i = 0; i < _requirements.get().requirements.size(); i++)
         {
-            ImGui::PushID(req_pair.second.id);
-            std::string name = req_pair.first;
+            Requirement &req = _requirements.get().requirements[i];
+            ImGui::PushID(req.id);
+            std::string name = req.name;
             ImGui::TableNextColumn();
-            if (ImGui::InputText("##req_name", &name))
+            if (ImGui::InputText("##req_name", &req.name))
             {
-                _requirements.get().requirements[name] = _requirements.get().requirements[req_pair.first];
-                _requirements.get().requirements.erase(req_pair.first);
-                _editCallback(req_pair.second.id, "Item", name);
-                break; // TODO: Stops the editor from crashing but results in a visual artifact. Not sure how to update a key inside a loop.
+                // break; // TODO: Stops the editor from crashing but results in a visual artifact. Not sure how to update a key inside a loop.
+                _editCallback(req.id, "Item", req.name);
             }
             ImGui::TableNextColumn();
             const char *operands[] = {"=", "<", "<=", ">", ">=", "!="};
-            int selected = (int)req_pair.second.operand;
+            int selected = (int)req.operand;
             if (ImGui::Combo("##req_operand", &selected, operands, 6)) // TODO: Not sure why but using IM_ARRAYSIZE like in the demo doesn't work
             {
-                _requirements.get().requirements[name].operand = (Operand)selected;
-                _editCallback(req_pair.second.id, "Operand", std::to_string(selected));
+                req.operand = (Operand)selected;
+                _editCallback(req.id, "Operand", std::to_string(selected));
             }
             ImGui::TableNextColumn();
-            if (ImGui::InputDouble("##req_value", &_requirements.get().requirements[name].value))
+            double value = req.value;
+            if (ImGui::InputDouble("##req_value", &value))
             {
-                _editCallback(req_pair.second.id, "Value", std::to_string(req_pair.second.value));
+                req.value = value;
+                _editCallback(req.id, "Value", std::to_string(req.value));
             }
             ImGui::TableNextColumn();
 
-            std::string popupName = "Delete Stage Requirement: " + std::to_string(req_pair.second.id);
+            std::string popupName = "Delete Stage Requirement: " + std::to_string(req.id);
             if (ImGui::Button("Delete"))
             {
                 ImGui::OpenPopup(popupName.c_str());
@@ -71,8 +72,8 @@ void RequirementsTableLayer::draw()
 
                 if (ImGui::Button("Yes"))
                 {
-                    _deleteCallback(req_pair.second.id);
-                    _requirements.get().requirements.erase(name);
+                    _deleteCallback(req.id);
+                    _requirements.get().requirements.erase(_requirements.get().requirements.begin() + i);
                     ImGui::CloseCurrentPopup();
                     ImGui::EndPopup();
                     ImGui::PopID();

@@ -36,7 +36,7 @@ Requirement StageLayer::createRequirement()
     {
         std::cout << "Error creating requirement:" << errmsg << std::endl;
     }
-    return Requirement(newRow, Operand::EQUAL, 0);
+    return Requirement(newRow, "requirement", Operand::EQUAL, 0);
 }
 
 void StageLayer::draw()
@@ -173,7 +173,6 @@ void StageLayer::draw()
     }
     ImGui::EndGroup();
 
-    //_requirementsTable.setCurrentRequirements(std::ref(_stages[_selectedStage].requirements));
     RequirementsTableLayer _requirementsTable(
         [=](long id, std::string f, std::string v)
         { this->editRequirement(id, f, v); },
