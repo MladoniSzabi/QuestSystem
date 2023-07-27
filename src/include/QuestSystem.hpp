@@ -14,6 +14,7 @@ class QuestSystem
 {
 private:
     sqlite3 *_questDatabaseConn = nullptr;
+    std::unordered_map<long, Stage> _activeStagesCache;
 
 public:
     QuestSystem();

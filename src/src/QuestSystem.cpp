@@ -169,20 +169,23 @@ std::vector<Stage> QuestSystem::getActiveStages()
         return {};
     }
 
-    std::vector<Stage> stages;
+    _activeStagesCache.clear();
+    std::vector<Stage> retval;
     Stage currStage = Stage(stageArray[0]);
     for (auto &stage : stageArray)
     {
         if (currStage.id != std::stol(stage[0]))
         {
-            stages.push_back(currStage);
+            _activeStagesCache[currStage.id] = currStage;
+            retval.push_back(currStage);
             currStage = Stage(stage);
         }
         currStage.addRequirement(stage);
     }
-    stages.push_back(currStage);
+    _activeStagesCache[currStage.id] = currStage;
+    retval.push_back(currStage);
 
-    return stages;
+    return retval;
 }
 
 std::vector<Stage> QuestSystem::getStagesForQuest(long questId)
@@ -302,30 +305,12 @@ bool QuestSystem::isQuestAvailable(long questId, const std::unordered_map<std::s
 
 bool QuestSystem::isStageCompletable(long stageId, const std::unordered_map<std::string, double> &info)
 {
-    std::string sql = "SELECT * FROM Stage LEFT JOIN Stage_Requirements ON Stage.Id = Stage_Requirements.StageId Where Stage.Id = " + std::to_string(stageId);
-    char *errorStr = nullptr;
-    SqlReturn stageArr;
-    int errorCode = sqlite3_exec(_questDatabaseConn, sql.c_str(), callback, (void *)&stageArr, &errorStr);
-    if (errorCode)
+    if (_activeStagesCache.find(stageId) == _activeStagesCache.end())
     {
-        std::cout << sql << std::endl
-                  << errorStr << std::endl;
         return false;
     }
 
-    if (stageArr.size() == 0)
-    {
-        std::cout << "Stage does not exist" << std::endl;
-        return false;
-    }
-
-    Stage stage(stageArr[0]);
-    for (const auto &line : stageArr)
-    {
-        stage.addRequirement(line);
-    }
-
-    return stage.areRequirementsMet(info);
+    return _activeStagesCache[stageId].areRequirementsMet(info);
 }
 
 std::vector<Stage> QuestSystem::completeStage(long stageId, const std::unordered_map<std::string, double> &info)
@@ -333,6 +318,23 @@ std::vector<Stage> QuestSystem::completeStage(long stageId, const std::unordered
     if (!isStageCompletable(stageId, info))
     {
         return {Stage()};
+    }
+
+    Stage currStage = _activeStagesCache[stageId];
+
+    // TODO: rephrase this:
+    // Active stages with the same quest id are different ways to complete a quest
+    // Since one of them is done the other paths are not valid anymore so remove them all
+    for (auto i = _activeStagesCache.begin(), last = _activeStagesCache.end(); i != last;)
+    {
+        if (i->second.questId == currStage.questId)
+        {
+            i = _activeStagesCache.erase(i);
+        }
+        else
+        {
+            ++i;
+        }
     }
 
     std::string completeStageSql = "INSERT INTO Progress(StageId, Finished) VALUES (" + std::to_string(stageId) + ", 1)";
@@ -380,11 +382,13 @@ std::vector<Stage> QuestSystem::completeStage(long stageId, const std::unordered
     {
         if (currStage.id != std::stol(stage[0]))
         {
+            _activeStagesCache[currStage.id] = currStage;
             retval.push_back(currStage);
             currStage = Stage(stage);
         }
         currStage.addRequirement(stage);
     }
+    _activeStagesCache[currStage.id] = currStage;
     retval.push_back(currStage);
 
     return retval;
