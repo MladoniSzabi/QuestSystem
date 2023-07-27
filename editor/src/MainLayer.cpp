@@ -11,7 +11,8 @@ MainLayer::MainLayer()
     _fileDialog.SetTypeFilters({".db"});
 
     std::shared_ptr<QuestLayer> ql = std::make_shared<QuestLayer>(std::ref(_db), std::ref(_qs));
-    _eventListeners["dbChanged"].push_back(ql.get());
+    addEventListener("dbChanged", ql.get());
+    //_eventListeners["dbChanged"].push_back(ql.get());
     _childLayers.push_back({"quests", ql});
 
     std::shared_ptr<StageLayer> sl = std::make_shared<StageLayer>(std::ref(_db), std::ref(_qs));
@@ -25,24 +26,6 @@ MainLayer::~MainLayer()
     {
         sqlite3_close(_db);
     }
-}
-
-void MainLayer::dispatchEvent(const std::string &eventName, void *eventData)
-{
-    if (_eventListeners.find(eventName) == _eventListeners.end())
-    {
-        std::cout << "Event: " << eventName << " has no event listeners" << std::endl;
-        return;
-    }
-    for (EventListener *l : _eventListeners[eventName])
-    {
-        l->handleEvent(eventName, eventData);
-    }
-}
-
-void MainLayer::addEventListener(const std::string &eventName, EventListener *listener)
-{
-    _eventListeners[eventName].push_back(listener);
 }
 
 void MainLayer::draw()

@@ -14,7 +14,7 @@
 #include "EventEmitter.hpp"
 #include "RequirementsTableLayer.hpp"
 
-class QuestLayer : public ImGuiLayer, public EventListener, public EventEmitter
+class QuestLayer : public ImGuiLayer, public EventListener<sqlite3 *>, public EventEmitter<long>
 {
 private:
     std::reference_wrapper<sqlite3 *> _db;
@@ -25,7 +25,6 @@ private:
     long _selectedQuest = -1;
 
     void renderQuest(Quest &);
-    void dispatchEvent(const std::string &eventName, void *eventData);
 
     void editRequirement(long requirementId, std::string field, std::string value);
     void deleteRequirement(long requirementId);
@@ -35,8 +34,7 @@ public:
     QuestLayer(std::reference_wrapper<sqlite3 *> db, std::reference_wrapper<QuestSystem> qs);
     ~QuestLayer() {}
     void draw() override;
-    void handleEvent(const std::string &eventName, void *eventData) override;
-    void addEventListener(const std::string &eventName, EventListener *eventListener) override;
+    void handleEvent(const std::string &eventName, sqlite3 *const &eventData) override;
 };
 
 #endif // QUESTLAYER_HPP_

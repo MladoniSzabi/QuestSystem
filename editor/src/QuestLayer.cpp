@@ -40,25 +40,7 @@ Requirement QuestLayer::createRequirement()
     return Requirement(newRow, "requirement", Operand::EQUAL, 0);
 }
 
-void QuestLayer::addEventListener(const std::string &eventName, EventListener *eventListener)
-{
-    _eventListeners[eventName].push_back(eventListener);
-}
-
-void QuestLayer::dispatchEvent(const std::string &eventName, void *eventData)
-{
-    if (_eventListeners.find(eventName) == _eventListeners.end())
-    {
-        std::cout << "Event: " << eventName << " has no event listeners" << std::endl;
-        return;
-    }
-    for (EventListener *l : _eventListeners[eventName])
-    {
-        l->handleEvent(eventName, eventData);
-    }
-}
-
-void QuestLayer::handleEvent(const std::string &eventName, void *eventData)
+void QuestLayer::handleEvent(const std::string &eventName, sqlite3 *const &eventData)
 {
     if (eventName == "dbChanged")
     {
@@ -120,7 +102,7 @@ void QuestLayer::draw()
             {
                 _selectedQuest = i;
                 long selectedQuestId = _quests[_selectedQuest].id;
-                dispatchEvent("selectedQuest", (void *)&selectedQuestId);
+                dispatchEvent("selectedQuest", selectedQuestId);
             }
         }
         ImGui::EndListBox();

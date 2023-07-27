@@ -13,7 +13,7 @@
 #include "QuestSystem.hpp"
 #include "RequirementsTableLayer.hpp"
 
-class StageLayer : public ImGuiLayer, public EventListener
+class StageLayer : public ImGuiLayer, public EventListener<long>
 {
 
 private:
@@ -31,7 +31,7 @@ private:
 public:
     StageLayer(std::reference_wrapper<sqlite3 *> db, std::reference_wrapper<QuestSystem> qs);
     void draw() override;
-    void handleEvent(const std::string &eventName, void *eventData) override;
+    void handleEvent(const std::string &eventName, const long &eventData) override;
 };
 
 #endif // STAGELAYER_HPP_

@@ -185,11 +185,11 @@ void StageLayer::draw()
     ImGui::Columns(1);
 }
 
-void StageLayer::handleEvent(const std::string &eventName, void *eventData)
+void StageLayer::handleEvent(const std::string &eventName, const long &eventData)
 {
     if (eventName == "selectedQuest")
     {
-        _selectedQuestId = *((long *)eventData);
+        _selectedQuestId = eventData;
         _stages = _qs.get().getStagesForQuest(_selectedQuestId);
     }
     else

@@ -3,10 +3,11 @@
 
 #include <string>
 
+template <class T>
 class EventListener
 {
 public:
-    virtual void handleEvent(const std::string &eventName, void *eventData) = 0;
+    virtual void handleEvent(const std::string &eventName, const T &eventData) = 0;
 };
 
 #endif // EVENTLISTENER_HPP_

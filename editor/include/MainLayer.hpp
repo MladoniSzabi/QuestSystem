@@ -12,7 +12,7 @@
 #include "EventEmitter.hpp"
 #include "QuestSystem.hpp"
 
-class MainLayer : public ImGuiLayer, public EventEmitter
+class MainLayer : public ImGuiLayer, public EventEmitter<sqlite3 *>
 {
 private:
     sqlite3 *_db = nullptr;
@@ -20,15 +20,11 @@ private:
     QuestSystem _qs;
     long _selectedQuest = -1;
     std::vector<std::pair<std::string, std::shared_ptr<ImGuiLayer>>> _childLayers;
-    std::unordered_map<std::string, std::vector<EventListener *>> _eventListeners;
-    void dispatchEvent(const std::string &eventName, void *eventData);
 
 public:
     MainLayer();
     ~MainLayer();
     void draw() override;
-
-    void addEventListener(const std::string &eventName, EventListener *listener) override;
 };
 
 #endif // MAINLAYER_HPP_
