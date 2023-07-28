@@ -127,57 +127,24 @@ TEST_F(QuestSystemFixture, TestAvailableQuests)
     EXPECT_TRUE(qs.isQuestAvailable(2, info));
 }
 
-TEST_F(QuestSystemFixture, TestStageCompleted)
+TEST_F(QuestSystemFixture, TestStageCompletableFalse)
 {
+    qs.startQuest(1);
     std::unordered_map<std::string, double> info;
     std::vector<Stage> s;
+
+    // stage 1
     EXPECT_FALSE(qs.isStageCompletable(1, info));
     EXPECT_FALSE(qs.isStageCompletable(2, info));
     s = qs.completeStage(1, info);
     EXPECT_EQ(s.size(), 1);
     EXPECT_EQ(s[0].id, 0);
-    s = qs.completeStage(2, info);
-    EXPECT_EQ(s.size(), 1);
-    EXPECT_EQ(s[0].id, 0);
 
-    info["roaches"] = 10;
-    EXPECT_TRUE(qs.isStageCompletable(1, info));
+    // stage 2
     EXPECT_FALSE(qs.isStageCompletable(2, info));
-    s = qs.completeStage(1, info);
-    EXPECT_EQ(s.size(), 1);
-    EXPECT_EQ(s[0].id, 2);
     s = qs.completeStage(2, info);
     EXPECT_EQ(s.size(), 1);
     EXPECT_EQ(s[0].id, 0);
-
-    info["roaches"] = 20;
-    EXPECT_TRUE(qs.isStageCompletable(1, info));
-    EXPECT_FALSE(qs.isStageCompletable(2, info));
-    s = qs.completeStage(1, info);
-    EXPECT_EQ(s.size(), 1);
-    EXPECT_EQ(s[0].id, 2);
-    s = qs.completeStage(2, info);
-    EXPECT_EQ(s.size(), 1);
-    EXPECT_EQ(s[0].id, 0);
-
-    info["deahs"] = 3;
-    EXPECT_TRUE(qs.isStageCompletable(1, info));
-    EXPECT_FALSE(qs.isStageCompletable(2, info));
-    s = qs.completeStage(1, info);
-    EXPECT_EQ(s.size(), 1);
-    EXPECT_EQ(s[0].id, 2);
-    s = qs.completeStage(2, info);
-    EXPECT_EQ(s.size(), 1);
-    EXPECT_EQ(s[0].id, 0);
-
-    info["deaths"] = 1;
-    EXPECT_TRUE(qs.isStageCompletable(1, info));
-    EXPECT_TRUE(qs.isStageCompletable(2, info));
-    s = qs.completeStage(1, info);
-    EXPECT_EQ(s.size(), 1);
-    EXPECT_EQ(s[0].id, 2);
-    s = qs.completeStage(2, info);
-    EXPECT_EQ(s.size(), 0);
 
     {
         std::string sql = "SELECT Id FROM Progress WHERE StageId=1 AND Finished=1;";
@@ -185,15 +152,150 @@ TEST_F(QuestSystemFixture, TestStageCompleted)
         char *errorStr = nullptr;
         int errorCode = sqlite3_exec(db, sql.c_str(), callback, (void *)&sqlReturn, &errorStr);
         ASSERT_FALSE(errorStr) << errorStr;
-        EXPECT_EQ(sqlReturn.size(), 4);
+        EXPECT_EQ(sqlReturn.size(), 0);
     }
-
     {
         std::string sql = "SELECT Id FROM Progress WHERE StageId=2 AND Finished=1;";
         SqlReturn sqlReturn;
         char *errorStr = nullptr;
         int errorCode = sqlite3_exec(db, sql.c_str(), callback, (void *)&sqlReturn, &errorStr);
         ASSERT_FALSE(errorStr) << errorStr;
+        EXPECT_EQ(sqlReturn.size(), 0);
+    }
+}
+
+TEST_F(QuestSystemFixture, TestStageCompletableFirst)
+{
+    qs.startQuest(1);
+    std::unordered_map<std::string, double> info;
+    std::vector<Stage> s;
+    info["roaches"] = 10;
+
+    // stage 1
+    EXPECT_TRUE(qs.isStageCompletable(1, info));
+    EXPECT_FALSE(qs.isStageCompletable(2, info));
+    s = qs.completeStage(1, info);
+    EXPECT_EQ(s.size(), 1);
+    EXPECT_EQ(s[0].id, 2);
+
+    // stage 2
+    EXPECT_FALSE(qs.isStageCompletable(2, info));
+    s = qs.completeStage(2, info);
+    EXPECT_EQ(s.size(), 1);
+    EXPECT_EQ(s[0].id, 0);
+
+    {
+        std::string sql = "SELECT Id FROM Progress WHERE StageId=1 AND Finished=1;";
+        SqlReturn sqlReturn;
+        char *errorStr = nullptr;
+        int errorCode = sqlite3_exec(db, sql.c_str(), callback, (void *)&sqlReturn, &errorStr);
+        ASSERT_FALSE(errorStr) << errorStr;
         EXPECT_EQ(sqlReturn.size(), 1);
     }
+    {
+        std::string sql = "SELECT Id FROM Progress WHERE StageId=2 AND Finished=1;";
+        SqlReturn sqlReturn;
+        char *errorStr = nullptr;
+        int errorCode = sqlite3_exec(db, sql.c_str(), callback, (void *)&sqlReturn, &errorStr);
+        ASSERT_FALSE(errorStr) << errorStr;
+        EXPECT_EQ(sqlReturn.size(), 0);
+    }
+}
+
+TEST_F(QuestSystemFixture, TestStageCompletableOneRequirementUnset)
+{
+    qs.startQuest(1);
+    std::unordered_map<std::string, double> info;
+    std::vector<Stage> s;
+    info["roaches"] = 20;
+
+    // stage 1
+    EXPECT_TRUE(qs.isStageCompletable(1, info));
+    EXPECT_FALSE(qs.isStageCompletable(2, info));
+    s = qs.completeStage(1, info);
+    EXPECT_EQ(s.size(), 1);
+    EXPECT_EQ(s[0].id, 2);
+
+    // stage 2
+    EXPECT_FALSE(qs.isStageCompletable(2, info));
+    s = qs.completeStage(2, info);
+    EXPECT_EQ(s.size(), 1);
+    EXPECT_EQ(s[0].id, 0);
+    {
+        std::string sql = "SELECT Id FROM Progress WHERE StageId=1 AND Finished=1;";
+        SqlReturn sqlReturn;
+        char *errorStr = nullptr;
+        int errorCode = sqlite3_exec(db, sql.c_str(), callback, (void *)&sqlReturn, &errorStr);
+        ASSERT_FALSE(errorStr) << errorStr;
+        EXPECT_EQ(sqlReturn.size(), 1);
+    }
+    {
+        std::string sql = "SELECT Id FROM Progress WHERE StageId=2 AND Finished=1;";
+        SqlReturn sqlReturn;
+        char *errorStr = nullptr;
+        int errorCode = sqlite3_exec(db, sql.c_str(), callback, (void *)&sqlReturn, &errorStr);
+        ASSERT_FALSE(errorStr) << errorStr;
+        EXPECT_EQ(sqlReturn.size(), 0);
+    }
+}
+
+TEST_F(QuestSystemFixture, TestStageCompletableLessThanContraint)
+{
+    qs.startQuest(1);
+    std::unordered_map<std::string, double> info;
+    std::vector<Stage> s;
+    info["roaches"] = 20;
+    info["deahs"] = 3;
+
+    // stage 1
+    EXPECT_TRUE(qs.isStageCompletable(1, info));
+    EXPECT_FALSE(qs.isStageCompletable(2, info));
+    s = qs.completeStage(1, info);
+    EXPECT_EQ(s.size(), 1);
+    EXPECT_EQ(s[0].id, 2);
+
+    // stage 2
+    EXPECT_FALSE(qs.isStageCompletable(2, info));
+    s = qs.completeStage(2, info);
+    EXPECT_EQ(s.size(), 1);
+    EXPECT_EQ(s[0].id, 0);
+
+    {
+        std::string sql = "SELECT Id FROM Progress WHERE StageId=1 AND Finished=1;";
+        SqlReturn sqlReturn;
+        char *errorStr = nullptr;
+        int errorCode = sqlite3_exec(db, sql.c_str(), callback, (void *)&sqlReturn, &errorStr);
+        ASSERT_FALSE(errorStr) << errorStr;
+        EXPECT_EQ(sqlReturn.size(), 1);
+    }
+    {
+        std::string sql = "SELECT Id FROM Progress WHERE StageId=2 AND Finished=1;";
+        SqlReturn sqlReturn;
+        char *errorStr = nullptr;
+        int errorCode = sqlite3_exec(db, sql.c_str(), callback, (void *)&sqlReturn, &errorStr);
+        ASSERT_FALSE(errorStr) << errorStr;
+        EXPECT_EQ(sqlReturn.size(), 0);
+    }
+}
+
+TEST_F(QuestSystemFixture, TestStageCompletableProgression)
+{
+    qs.startQuest(1);
+    std::unordered_map<std::string, double> info;
+    std::vector<Stage> s;
+    info["roaches"] = 20;
+    info["deaths"] = 1;
+
+    // stage 1
+    EXPECT_TRUE(qs.isStageCompletable(1, info));
+    EXPECT_FALSE(qs.isStageCompletable(2, info));
+    s = qs.completeStage(1, info);
+    EXPECT_EQ(s.size(), 1);
+    EXPECT_EQ(s[0].id, 2);
+
+    // stage 2
+    EXPECT_FALSE(qs.isStageCompletable(1, info));
+    EXPECT_TRUE(qs.isStageCompletable(2, info));
+    s = qs.completeStage(2, info);
+    EXPECT_EQ(s.size(), 0);
 }
