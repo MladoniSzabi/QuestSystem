@@ -397,3 +397,16 @@ std::vector<Stage> QuestSystem::completeStage(long stageId, const std::unordered
 
     return retval;
 }
+
+std::vector<Stage> QuestSystem::getCompletableStages(std::unordered_map<std::string, double> info)
+{
+    std::vector<Stage> retval;
+    for (const auto &stage : _activeStagesCache)
+    {
+        if (isStageCompletable(stage.second.id, info))
+        {
+            retval.push_back(stage.second);
+        }
+    }
+    return retval;
+}

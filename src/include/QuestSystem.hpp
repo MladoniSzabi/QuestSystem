@@ -41,6 +41,8 @@ public:
 
     bool isStageCompletable(long stageId, const std::unordered_map<std::string, double> &info);
     std::vector<Stage> completeStage(long stageId, const std::unordered_map<std::string, double> &info); // Returns the next stage(s)
+
+    std::vector<Stage> getCompletableStages(std::unordered_map<std::string, double> info);
 };
 
 #endif // QUESTSYSTEM_HPP_
