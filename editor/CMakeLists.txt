@@ -14,7 +14,7 @@ endif()
 
 include_directories(
     include
-    ../src/include
+    ../library/include
     ../vendor/include/
     ../vendor/include/imgui
     ${OPENGL_gl_LIBRARY}
