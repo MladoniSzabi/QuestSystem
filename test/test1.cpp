@@ -66,15 +66,15 @@ protected:
 TEST_F(QuestSystemFixture, TestStartQuest)
 {
     EXPECT_EQ(qs.getActiveQuests().size(), 0);
-    const char *error = qs.startQuest(1);
-    EXPECT_EQ(error, nullptr) << error;
+    std::vector<Stage> stages = qs.startQuest(1);
+    EXPECT_EQ(stages.size(), 1);
     EXPECT_EQ(qs.getActiveQuests().size(), 1);
     std::vector<Stage> as = qs.getActiveStages();
     EXPECT_EQ(as.size(), 1);
     EXPECT_EQ(as[0].id, 1);
     EXPECT_EQ(as[0].description, "Step 1");
-    error = qs.startQuest("Goodbye, Wold!");
-    EXPECT_EQ(error, nullptr) << error;
+    stages = qs.startQuest("Goodbye, Wold!");
+    EXPECT_EQ(stages.size(), 1);
     EXPECT_EQ(qs.getActiveQuests().size(), 2);
     EXPECT_EQ(qs.getActiveStages().size(), 2);
     std::cout << std::endl;

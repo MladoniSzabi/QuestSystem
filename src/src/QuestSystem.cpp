@@ -50,55 +50,79 @@ void QuestSystem::close()
     _questDatabaseConn = nullptr;
 }
 
-const char *QuestSystem::startQuest(long questId)
+std::vector<Stage> QuestSystem::startQuest(long questId)
 {
-    std::string select = "SELECT * FROM Stage LEFT JOIN Stage_Requirements ON Stage.Id=Stage_Requirements.StageId WHERE QuestId=" + std::to_string(questId) + " AND Level=0;";
+    std::string select = "SELECT * FROM Stage LEFT JOIN Stage_Requirements ON Stage.Id=Stage_Requirements.StageId WHERE QuestId=" + std::to_string(questId) + " AND Level=0 ORDER BY Stage.Id;";
     SqlReturn sqlReturn;
     char *errorStr = nullptr;
     int errorCode = sqlite3_exec(_questDatabaseConn, select.c_str(), callback, (void *)&sqlReturn, &errorStr);
     if (errorStr)
     {
-        return errorStr;
+        std::cout << "ERROR: " << errorStr << std::endl;
+        return {};
     }
     if (sqlReturn.size() == 0)
     {
-        return "Quest not found";
+        std::cout << "ERROR: Quest not found" << std::endl;
+        return {};
     }
 
+    std::vector<Stage> retval;
     Stage currStage = Stage(sqlReturn[0]);
     for (auto &stage : sqlReturn)
     {
+        if (currStage.id != std::stol(stage[0]))
+        {
+            _activeStagesCache[currStage.id] = currStage;
+            retval.push_back(currStage);
+            currStage = Stage(stage);
+        }
         currStage.addRequirement(stage);
     }
     _activeStagesCache[currStage.id] = currStage;
+    retval.push_back(currStage);
 
     std::string sql = "INSERT INTO Progress(StageId, Finished) VALUES (" + sqlReturn[0][0] + ", 0)";
     errorCode = sqlite3_exec(_questDatabaseConn, sql.c_str(), nullptr, nullptr, &errorStr);
-    return errorStr;
+    return retval;
 }
 
-const char *QuestSystem::startQuest(const std::string &questName)
+std::vector<Stage> QuestSystem::startQuest(const std::string &questName)
 {
-    std::string getQuestIdSql = "SELECT Stage.*, Stage_Requirements.* FROM Stage LEFT JOIN Stage_Requirements ON Stage.Id=Stage_Requirements.StageId INNER JOIN Quest ON Stage.QuestId=Quest.Id WHERE Quest.Name='" + questName + "' AND Stage.Level=0;";
+    std::string getQuestIdSql = "SELECT Stage.*, Stage_Requirements.* FROM Stage LEFT JOIN Stage_Requirements ON Stage.Id=Stage_Requirements.StageId INNER JOIN Quest ON Stage.QuestId=Quest.Id WHERE Quest.Name='" + questName + "' AND Stage.Level=0 ORDER BY Stage.Id;";
     char *errorStr = nullptr;
     SqlReturn sqlReturn;
     int errorCode = sqlite3_exec(_questDatabaseConn, getQuestIdSql.c_str(), callback, (void *)&sqlReturn, &errorStr);
+    if (errorStr)
+    {
+        std::cout << "ERROR: " << errorStr << std::endl;
+        return {};
+    }
     if (sqlReturn.size() == 0)
     {
-        return "Quest not found";
+        std::cout << "ERROR: Quest not found" << std::endl;
+        return {};
     }
 
+    std::vector<Stage> retval;
     Stage currStage = Stage(sqlReturn[0]);
     for (auto &stage : sqlReturn)
     {
+        if (currStage.id != std::stol(stage[0]))
+        {
+            _activeStagesCache[currStage.id] = currStage;
+            retval.push_back(currStage);
+            currStage = Stage(stage);
+        }
         currStage.addRequirement(stage);
     }
     _activeStagesCache[currStage.id] = currStage;
+    retval.push_back(currStage);
 
     std::string sql = "INSERT INTO Progress(StageId, Finished) VALUES (" + sqlReturn[0][0] + ", 0)";
     errorStr = nullptr;
     errorCode = sqlite3_exec(_questDatabaseConn, sql.c_str(), nullptr, nullptr, &errorStr);
-    return errorStr;
+    return retval;
 }
 
 std::vector<Quest> QuestSystem::getAllQuests()
