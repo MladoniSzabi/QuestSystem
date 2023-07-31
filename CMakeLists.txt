@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 add_library(questEditor STATIC
 
-    vendor/src/sqlite/sqlite3.c
+    vendor/sqlite/sqlite3.c
 
     library/src/QuestSystem.cpp
     library/src/Requirement.cpp
@@ -17,7 +17,7 @@ add_subdirectory(test)
 
 include_directories(
     library/include
-    vendor/include
+    vendor
 )
 
 target_include_directories(questEditor PUBLIC src/include)

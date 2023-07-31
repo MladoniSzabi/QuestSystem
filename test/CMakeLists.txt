@@ -13,7 +13,10 @@ FetchContent_MakeAvailable(googletest)
 
 enable_testing()
 
-include_directories(../library/include)
+include_directories(
+    ../library/include
+    ../vendor/
+)
 
 add_executable(testing test1.cpp)
 

@@ -15,8 +15,7 @@ endif()
 include_directories(
     include
     ../library/include
-    ../vendor/include/
-    ../vendor/include/imgui
+    ../vendor
     ${OPENGL_gl_LIBRARY}
 )
 
@@ -30,15 +29,15 @@ add_executable(editor
     src/util.cpp
     src/RequirementsTableLayer.cpp
 
-    ../vendor/src/imgui/imgui.cpp
-    ../vendor/src/imgui/imgui_demo.cpp
-    ../vendor/src/imgui/imgui_draw.cpp
-    ../vendor/src/imgui/imgui_tables.cpp
-    ../vendor/src/imgui/imgui_widgets.cpp
-    ../vendor/src/imgui/imgui_stdlib.cpp
+    ../vendor/imgui/imgui.cpp
+    ../vendor/imgui/imgui_demo.cpp
+    ../vendor/imgui/imgui_draw.cpp
+    ../vendor/imgui/imgui_tables.cpp
+    ../vendor/imgui/imgui_widgets.cpp
+    ../vendor/imgui/imgui_stdlib.cpp
 
-    ../vendor/src/imgui/imgui_impl_opengl3.cpp
-    ../vendor/src/imgui/imgui_impl_glfw.cpp
+    ../vendor/imgui/imgui_impl_opengl3.cpp
+    ../vendor/imgui/imgui_impl_glfw.cpp
 )
 
 target_link_libraries(editor GL)
